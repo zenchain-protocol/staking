@@ -49,7 +49,7 @@ export const BalanceLinks = () => {
           disabled={
             !(
               activeAccount &&
-              ['polkadot', 'kusama'].includes(network) &&
+              ['polkadot', 'zenchain'].includes(network) &&
               isNominating()
             )
           }

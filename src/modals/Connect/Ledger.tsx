@@ -25,7 +25,7 @@ export const Ledger = () => {
   const url = 'ledger.com';
 
   // Only render on Polkadot and Kusama networks.
-  if (!['polkadot', 'kusama'].includes(network)) {
+  if (!['polkadot', 'zenchain'].includes(network)) {
     return null;
   }
 

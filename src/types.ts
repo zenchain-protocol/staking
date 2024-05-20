@@ -47,7 +47,7 @@ declare global {
   }
 }
 
-export type NetworkName = 'polkadot' | 'kusama' | 'westend';
+export type NetworkName = 'polkadot' | 'zenchain';
 
 export type Networks = Record<string, Network>;
 

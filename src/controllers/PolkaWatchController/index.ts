@@ -13,7 +13,7 @@ export class PolkaWatchController {
   static API_VERSION = 'v2';
 
   // Polkawatch supported networks.
-  static SUPPORTED_NETWORKS = ['polkadot', 'kusama'];
+  static SUPPORTED_NETWORKS = ['polkadot'];
 
   // ------------------------------------------------------
   // API configuration.

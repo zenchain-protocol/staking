@@ -30,6 +30,8 @@ export const Item = ({ item, actionable }: ItemProps) => {
     icon,
     validators: entityAllValidators,
   } = item;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const validatorCount = entityAllValidators[network]?.length ?? 0;
 
   const { setActiveSection, setActiveItem, setScrollPos } =

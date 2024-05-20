@@ -50,7 +50,8 @@ export const ExternalAccountsProvider = ({
     keyring.setSS58Format(ss58);
 
     let newEntry = {
-      address: keyring.addFromAddress(address).address,
+      address: keyring.addFromAddress(address, undefined, undefined, 'ecdsa')
+        .address,
       network,
       name: ellipsisFn(address),
       source: 'external',

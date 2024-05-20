@@ -39,7 +39,7 @@ export const UpdateReserve = () => {
   const { edReserved } = getTransferOptions(activeAccount);
   const minReserve = planckToUnit(edReserved, units);
   const maxReserve = minReserve.plus(
-    ['polkadot', 'westend'].includes(network) ? 3 : 1
+    ['polkadot', 'zenchain'].includes(network) ? 3 : 1
   );
 
   const [sliderReserve, setSliderReserve] = useState<number>(

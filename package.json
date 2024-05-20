@@ -14,7 +14,8 @@
     "locale:validate": "node ./.scripts/localeValidate.cjs",
     "preview": "vite preview",
     "test": "vitest",
-    "visualizer": "vite-bundle-visualizer"
+    "visualizer": "vite-bundle-visualizer",
+    "updateChainSpecs": "node ./.scripts/updateChainSpec.cjs zenchain_testnet.json"
   },
   "dependencies": {
     "@dotlottie/player-component": "^2.7.12",
