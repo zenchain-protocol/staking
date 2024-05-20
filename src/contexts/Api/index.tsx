@@ -15,7 +15,6 @@ import type {
   APIConstants,
   APIContextInterface,
   APINetworkMetrics,
-  APIPoolsConfig,
   APIProviderProps,
   APIStakingMetrics,
 } from './types';
@@ -25,7 +24,6 @@ import {
   defaultActiveEra,
   defaultApiContext,
   defaultChainState,
-  defaultPoolsConfig,
   defaultNetworkMetrics,
   defaultStakingMetrics,
 } from './defaults';
@@ -110,11 +108,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
   const [activeEra, setActiveEra] = useState<APIActiveEra>(defaultActiveEra);
   const activeEraRef = useRef(activeEra);
 
-  // Store pool config in state.
-  const [poolsConfig, setPoolsConfig] =
-    useState<APIPoolsConfig>(defaultPoolsConfig);
-  const poolsConfigRef = useRef(poolsConfig);
-
   // Store staking metrics in state.
   const [stakingMetrics, setStakingMetrics] = useState<APIStakingMetrics>(
     defaultStakingMetrics
@@ -152,7 +145,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       consts: newConsts,
       networkMetrics: newNetworkMetrics,
       activeEra: newActiveEra,
-      poolsConfig: newPoolsConfig,
       stakingMetrics: newStakingMetrics,
     } = await apiInstance.bootstrapNetworkConfig();
 
@@ -165,7 +157,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       setActiveEra,
       activeEraRef
     );
-    setStateWithRef(newPoolsConfig, setPoolsConfig, poolsConfigRef);
     setStateWithRef(newStakingMetrics, setStakingMetrics, stakingMetricsRef);
 
     // API is now ready to be used.
@@ -177,7 +168,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     // Initialise subscriptions.
     apiInstance.subscribeBlockNumber();
     apiInstance.subscribeNetworkMetrics();
-    apiInstance.subscribePoolsConfig();
     apiInstance.subscribeActiveEra();
   };
 
@@ -275,27 +265,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     }
   };
 
-  // Handle new pools config updates.
-  const handlePoolsConfigUpdate = (e: Event): void => {
-    if (isCustomEvent(e)) {
-      const { poolsConfig: newPoolsConfig } = e.detail;
-      // Only update if values have changed.
-      if (
-        JSON.stringify(newPoolsConfig) !==
-        JSON.stringify(poolsConfigRef.current)
-      ) {
-        setStateWithRef(
-          {
-            ...poolsConfigRef.current,
-            ...newPoolsConfig,
-          },
-          setPoolsConfig,
-          poolsConfigRef
-        );
-      }
-    }
-  };
-
   // Handle new staking metrics updates.
   const handleStakingMetricsUpdate = (e: Event): void => {
     if (isCustomEvent(e)) {
@@ -373,7 +342,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       networkMetricsRef
     );
     setStateWithRef(defaultActiveEra, setActiveEra, activeEraRef);
-    setStateWithRef(defaultPoolsConfig, setPoolsConfig, poolsConfigRef);
     setStateWithRef(
       defaultStakingMetrics,
       setStakingMetrics,
@@ -402,7 +370,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     documentRef
   );
   useEventListener('new-active-era', handleActiveEraUpdate, documentRef);
-  useEventListener('new-pools-config', handlePoolsConfigUpdate, documentRef);
   useEventListener(
     'new-staking-metrics',
     handleStakingMetricsUpdate,
@@ -423,7 +390,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
         consts,
         networkMetrics,
         activeEra,
-        poolsConfig,
         stakingMetrics,
         isPagedRewardsActive,
       }}

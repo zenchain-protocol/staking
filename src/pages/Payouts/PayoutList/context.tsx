@@ -3,8 +3,8 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { PayoutListContextInterface } from 'pages/Pools/types';
-import type { ListFormat } from 'library/PoolList/types';
+import type { PayoutListContextInterface } from '../types';
+import type { ListFormat } from '../../../library/List/types';
 
 export const PayoutListContext = createContext<PayoutListContextInterface>({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function

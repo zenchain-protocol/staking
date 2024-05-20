@@ -8,7 +8,6 @@ import type {
 } from 'contexts/Validators/types';
 import type BigNumber from 'bignumber.js';
 import type { NominationStatus } from 'library/ValidatorList/ValidatorItem/types';
-import type { BondedPool } from 'contexts/Pools/BondedPools/types';
 import type { ReactNode } from 'react';
 
 export interface BlockedProps {
@@ -25,10 +24,6 @@ export interface FavoriteProps {
 
 export interface IdentityProps {
   address: string;
-}
-
-export interface PoolIdentityProps {
-  pool: BondedPool;
 }
 
 export interface MetricsProps {

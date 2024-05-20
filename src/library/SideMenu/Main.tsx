@@ -19,7 +19,6 @@ import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { Heading } from './Heading/Heading';
 import { Primary } from './Primary';
 import { LogoWrapper } from './Wrapper';
-import { useBalances } from 'contexts/Balances';
 import { useSyncing } from 'hooks/useSyncing';
 
 export const Main = () => {
@@ -29,16 +28,11 @@ export const Main = () => {
   const { networkData } = useNetwork();
   const { getBondedAccount } = useBonded();
   const { accounts } = useImportedAccounts();
-  const { getPoolMembership } = useBalances();
   const { activeAccount } = useActiveAccounts();
   const { inSetup: inNominatorSetup, addressDifferentToStash } = useStaking();
-  const {
-    getPoolSetupPercent,
-    getNominatorSetupPercent,
-  }: SetupContextInterface = useSetup();
+  const { getNominatorSetupPercent }: SetupContextInterface = useSetup();
   const { sideMenuMinimised }: UIContextInterface = useUi();
 
-  const membership = getPoolMembership(activeAccount);
   const controller = getBondedAccount(activeAccount);
   const controllerDifferentToStash = addressDifferentToStash(controller);
 
@@ -89,18 +83,6 @@ export const Main = () => {
         }
       }
 
-      if (uri === `${import.meta.env.BASE_URL}pools`) {
-        // configure Pools action
-        const inPool = membership;
-
-        if (inPool) {
-          pages[i].action = {
-            type: 'text',
-            status: 'success',
-            text: t('active'),
-          };
-        }
-      }
       i++;
     }
 
@@ -114,10 +96,8 @@ export const Main = () => {
     accounts,
     controllerDifferentToStash,
     syncing,
-    membership,
     inNominatorSetup(),
     getNominatorSetupPercent(activeAccount),
-    getPoolSetupPercent(activeAccount),
     i18n.resolvedLanguage,
   ]);
 

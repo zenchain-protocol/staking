@@ -13,13 +13,11 @@ import { useHelp } from 'contexts/Help';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBonded } from 'contexts/Bonded';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { SubmitTx } from 'library/SubmitTx';
 import type {
   NominationSelection,
   NominationSelectionWithResetCounter,
 } from 'library/GenerateNominations/types';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { RevertPrompt } from './Prompts/RevertPrompt';
 import { CanvasSubmitTxFooter, CanvasFullScreenWrapper } from '../Wrappers';
 import { NotificationsController } from 'controllers/NotificationsController';
@@ -36,10 +34,8 @@ export const ManageNominations = () => {
   } = useOverlay().canvas;
   const { openHelp } = useHelp();
   const { consts, api } = useApi();
-  const { activePool } = useActivePool();
   const { getBondedAccount } = useBonded();
   const { activeAccount } = useActiveAccounts();
-  const { updatePoolNominations } = useBondedPools();
   const { openPromptWith, closePrompt } = usePrompt();
 
   const { maxNominations } = consts;
@@ -92,7 +88,7 @@ export const ManageNominations = () => {
 
   // Tx to submit.
   const getTx = () => {
-    let tx = null;
+    const tx = null;
     if (!valid || !api) {
       return tx;
     }
@@ -106,14 +102,7 @@ export const ManageNominations = () => {
           }
     );
 
-    if (isPool) {
-      if (activePool) {
-        tx = api.tx.nominationPools.nominate(activePool.id, targetsToSubmit);
-      }
-    } else {
-      tx = api.tx.staking.nominate(targetsToSubmit);
-    }
-    return tx;
+    return api.tx.staking.nominate(targetsToSubmit);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -122,15 +111,6 @@ export const ManageNominations = () => {
     shouldSubmit: valid,
     callbackSubmit: () => {
       setCanvasStatus('closing');
-    },
-    callbackInBlock: () => {
-      if (isPool && activePool) {
-        // Update bonded pool targets if updating pool nominations.
-        updatePoolNominations(
-          activePool.id,
-          newNominations.nominations.map((n) => n.address)
-        );
-      }
     },
   });
 

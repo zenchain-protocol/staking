@@ -2,21 +2,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useTranslation } from 'react-i18next';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useStaking } from 'contexts/Staking';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import DefaultAccount from '../Account/DefaultAccount';
-import PoolAccount from '../Account/PoolAccount';
 import { HeadingWrapper } from './Wrappers';
 import { useSyncing } from 'hooks/useSyncing';
 
 export const Connected = () => {
   const { t } = useTranslation('library');
   const { isNominating } = useStaking();
-  const { activePool } = useActivePool();
-  const { poolsMetaData } = useBondedPools();
   const { syncing } = useSyncing(['initialization']);
   const { accountHasSigner } = useImportedAccounts();
   const { activeAccount, activeProxy } = useActiveAccounts();
@@ -34,17 +29,6 @@ export const Connected = () => {
             readOnly={!accountHasSigner(activeAccount)}
           />
         </HeadingWrapper>
-
-        {/* Pool account display / hide if not in pool or if syncing. */}
-        {activePool !== null && !syncing && (
-          <HeadingWrapper>
-            <PoolAccount
-              label={t('pool')}
-              pool={activePool}
-              syncing={!Object.values(poolsMetaData).length}
-            />
-          </HeadingWrapper>
-        )}
 
         {/* Proxy account display / hide if no proxy. */}
         {activeProxy && (

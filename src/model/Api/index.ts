@@ -10,14 +10,12 @@ import type {
   APIActiveEra,
   APIConstants,
   APINetworkMetrics,
-  APIPoolsConfig,
   APIStakingMetrics,
 } from 'contexts/Api/types';
 import { SyncController } from 'controllers/SyncController';
 import type { AnyApi, NetworkName } from 'types';
 import { NetworkList } from 'config/networks';
 import { makeCancelable, rmCommas, stringToBigNumber } from '@w3ux/utils';
-import { WellKnownChain } from '@substrate/connect';
 import type { BlockNumber } from '@polkadot/types/interfaces';
 import type {
   APIEventDetail,
@@ -25,6 +23,8 @@ import type {
   EventApiStatus,
   SubstrateConnect,
 } from './types';
+import { WellKnownChain } from '@substrate/connect';
+import * as ZenchainTestnetChainSpec from 'config/chain-specs/zenchain_testnet.json';
 
 export class Api {
   // ------------------------------------------------------
@@ -153,12 +153,16 @@ export class Api {
     this.cancelFn = ScPromise.cancel;
     const Sc = (await ScPromise.promise) as SubstrateConnect;
 
-    // Get light client key from network list.
-    const lightClientKey = NetworkList[this.network].endpoints
-      .lightClient as WellKnownChain;
+    // Get chain spec
+    const chainSpec =
+      this.network === 'polkadot'
+        ? WellKnownChain[
+            NetworkList[this.network].endpoints.lightClient as WellKnownChain
+          ]
+        : JSON.stringify(ZenchainTestnetChainSpec);
 
-    // Instantiate light client provider.
-    this.#provider = new ScProvider(Sc, WellKnownChain[lightClientKey]);
+    // Instantiate provider and connect
+    this.#provider = new ScProvider(Sc, chainSpec);
     await this.#provider.connect();
   }
 
@@ -230,7 +234,6 @@ export class Api {
     consts: APIConstants;
     networkMetrics: APINetworkMetrics;
     activeEra: APIActiveEra;
-    poolsConfig: APIPoolsConfig;
     stakingMetrics: APIStakingMetrics;
   }> => {
     // Fetch network constants.
@@ -244,7 +247,6 @@ export class Api {
       this.api.consts.balances.existentialDeposit,
       this.api.consts.staking.historyDepth,
       this.api.consts.fastUnstake.deposit,
-      this.api.consts.nominationPools.palletId,
       this.api.consts.staking.maxExposurePageSize,
     ];
 
@@ -271,21 +273,8 @@ export class Api {
     const networkMetrics = await this.api.queryMulti([
       // Network metrics.
       this.api.query.balances.totalIssuance,
-      this.api.query.auctions.auctionCounter,
-      this.api.query.paraSessionInfo.earliestStoredSession,
       this.api.query.fastUnstake.erasToCheckPerBlock,
       this.api.query.staking.minimumActiveStake,
-      // Nomination pool configs.
-      this.api.query.nominationPools.counterForPoolMembers,
-      this.api.query.nominationPools.counterForBondedPools,
-      this.api.query.nominationPools.counterForRewardPools,
-      this.api.query.nominationPools.lastPoolId,
-      this.api.query.nominationPools.maxPoolMembers,
-      this.api.query.nominationPools.maxPoolMembersPerPool,
-      this.api.query.nominationPools.maxPools,
-      this.api.query.nominationPools.minCreateBond,
-      this.api.query.nominationPools.minJoinBond,
-      this.api.query.nominationPools.globalMaxCommission,
       // Staking metrics.
       this.api.query.staking.counterForNominators,
       this.api.query.staking.counterForValidators,
@@ -296,19 +285,6 @@ export class Api {
       this.api.query.staking.minNominatorBond,
       [this.api.query.staking.erasTotalStake, activeEra.index.toString()],
     ]);
-
-    // format optional configs to BigNumber or null.
-    const maxPoolMembers = networkMetrics[9].toHuman()
-      ? new BigNumber(rmCommas(networkMetrics[9].toString()))
-      : null;
-
-    const maxPoolMembersPerPool = networkMetrics[10].toHuman()
-      ? new BigNumber(rmCommas(networkMetrics[10].toString()))
-      : null;
-
-    const maxPools = networkMetrics[11].toHuman()
-      ? new BigNumber(rmCommas(networkMetrics[11].toString()))
-      : null;
 
     return {
       consts: {
@@ -339,44 +315,27 @@ export class Api {
         fastUnstakeDeposit: consts[8]
           ? stringToBigNumber(consts[8].toString())
           : new BigNumber(0),
-        poolsPalletId: consts[9] ? consts[9].toU8a() : new Uint8Array(0),
-        maxExposurePageSize: consts[10]
-          ? stringToBigNumber(consts[10].toString())
+        maxExposurePageSize: consts[9]
+          ? stringToBigNumber(consts[9].toString())
           : NetworkList[this.network].maxExposurePageSize,
       },
       networkMetrics: {
         totalIssuance: new BigNumber(networkMetrics[0].toString()),
-        auctionCounter: new BigNumber(networkMetrics[1].toString()),
-        earliestStoredSession: new BigNumber(networkMetrics[2].toString()),
         fastUnstakeErasToCheckPerBlock: Number(
-          rmCommas(networkMetrics[3].toString())
+          rmCommas(networkMetrics[1].toString())
         ),
-        minimumActiveStake: new BigNumber(networkMetrics[4].toString()),
+        minimumActiveStake: new BigNumber(networkMetrics[2].toString()),
       },
       activeEra,
-      poolsConfig: {
-        counterForPoolMembers: stringToBigNumber(networkMetrics[5].toString()),
-        counterForBondedPools: stringToBigNumber(networkMetrics[6].toString()),
-        counterForRewardPools: stringToBigNumber(networkMetrics[7].toString()),
-        lastPoolId: stringToBigNumber(networkMetrics[8].toString()),
-        maxPoolMembers,
-        maxPoolMembersPerPool,
-        maxPools,
-        minCreateBond: stringToBigNumber(networkMetrics[12].toString()),
-        minJoinBond: stringToBigNumber(networkMetrics[13].toString()),
-        globalMaxCommission: Number(
-          String(networkMetrics[14]?.toHuman() || '100%').slice(0, -1)
-        ),
-      },
       stakingMetrics: {
-        totalNominators: stringToBigNumber(networkMetrics[15].toString()),
-        totalValidators: stringToBigNumber(networkMetrics[16].toString()),
-        maxValidatorsCount: stringToBigNumber(networkMetrics[17].toString()),
-        validatorCount: stringToBigNumber(networkMetrics[18].toString()),
-        lastReward: stringToBigNumber(networkMetrics[19].toString()),
-        lastTotalStake: stringToBigNumber(networkMetrics[20].toString()),
-        minNominatorBond: stringToBigNumber(networkMetrics[21].toString()),
-        totalStaked: stringToBigNumber(networkMetrics[22].toString()),
+        totalNominators: stringToBigNumber(networkMetrics[3].toString()),
+        totalValidators: stringToBigNumber(networkMetrics[4].toString()),
+        maxValidatorsCount: stringToBigNumber(networkMetrics[5].toString()),
+        validatorCount: stringToBigNumber(networkMetrics[6].toString()),
+        lastReward: stringToBigNumber(networkMetrics[7].toString()),
+        lastTotalStake: stringToBigNumber(networkMetrics[8].toString()),
+        minNominatorBond: stringToBigNumber(networkMetrics[9].toString()),
+        totalStaked: stringToBigNumber(networkMetrics[10].toString()),
       },
     };
   };
@@ -391,20 +350,16 @@ export class Api {
       const unsub = await this.api.queryMulti(
         [
           this.api.query.balances.totalIssuance,
-          this.api.query.auctions.auctionCounter,
-          this.api.query.paraSessionInfo.earliestStoredSession,
           this.api.query.fastUnstake.erasToCheckPerBlock,
           this.api.query.staking.minimumActiveStake,
         ],
         (result) => {
           const networkMetrics = {
             totalIssuance: new BigNumber(result[0].toString()),
-            auctionCounter: new BigNumber(result[1].toString()),
-            earliestStoredSession: new BigNumber(result[2].toString()),
             fastUnstakeErasToCheckPerBlock: Number(
-              rmCommas(result[3].toString())
+              rmCommas(result[1].toString())
             ),
-            minimumActiveStake: new BigNumber(result[4].toString()),
+            minimumActiveStake: new BigNumber(result[2].toString()),
           };
 
           document.dispatchEvent(
@@ -448,62 +403,6 @@ export class Api {
       );
     });
     this.#unsubs['activeEra'] = unsub as unknown as VoidFn;
-  };
-
-  // Subscribe to pools config.
-  subscribePoolsConfig = async (): Promise<void> => {
-    if (this.#unsubs['poolsConfig'] === undefined) {
-      const unsub = await this.api.queryMulti(
-        [
-          this.api.query.nominationPools.counterForPoolMembers,
-          this.api.query.nominationPools.counterForBondedPools,
-          this.api.query.nominationPools.counterForRewardPools,
-          this.api.query.nominationPools.lastPoolId,
-          this.api.query.nominationPools.maxPoolMembers,
-          this.api.query.nominationPools.maxPoolMembersPerPool,
-          this.api.query.nominationPools.maxPools,
-          this.api.query.nominationPools.minCreateBond,
-          this.api.query.nominationPools.minJoinBond,
-          this.api.query.nominationPools.globalMaxCommission,
-        ],
-        (result) => {
-          // format optional configs to BigNumber or null.
-          const maxPoolMembers = result[4].toHuman()
-            ? new BigNumber(rmCommas(result[4].toString()))
-            : null;
-
-          const maxPoolMembersPerPool = result[5].toHuman()
-            ? new BigNumber(rmCommas(result[5].toString()))
-            : null;
-
-          const maxPools = result[6].toHuman()
-            ? new BigNumber(rmCommas(result[6].toString()))
-            : null;
-
-          const poolsConfig = {
-            counterForPoolMembers: stringToBigNumber(result[0].toString()),
-            counterForBondedPools: stringToBigNumber(result[1].toString()),
-            counterForRewardPools: stringToBigNumber(result[2].toString()),
-            lastPoolId: stringToBigNumber(result[3].toString()),
-            maxPoolMembers,
-            maxPoolMembersPerPool,
-            maxPools,
-            minCreateBond: stringToBigNumber(result[7].toString()),
-            minJoinBond: stringToBigNumber(result[8].toString()),
-            globalMaxCommission: Number(
-              String(result[9]?.toHuman() || '100%').slice(0, -1)
-            ),
-          };
-
-          document.dispatchEvent(
-            new CustomEvent(`new-pools-config`, {
-              detail: { poolsConfig },
-            })
-          );
-        }
-      );
-      this.#unsubs['poolsConfig'] = unsub as unknown as VoidFn;
-    }
   };
 
   // Subscribe to staking metrics.

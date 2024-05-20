@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { rmCommas, stringToBigNumber } from '@w3ux/utils';
-import BigNumber from 'bignumber.js';
 import type { AnyApi, MaybeAddress } from 'types';
 import type {
   ActiveBalance,
@@ -12,7 +11,6 @@ import type {
   UnlockChunkRaw,
 } from 'contexts/Balances/types';
 import type { PayeeConfig, PayeeOptions } from 'contexts/Setup/types';
-import type { PoolMembership } from 'contexts/Pools/types';
 import { SyncController } from 'controllers/SyncController';
 import { defaultNominations } from './defaults';
 import type { VoidFn } from '@polkadot/api/types';
@@ -34,9 +32,6 @@ export class BalancesController {
 
   // Account payees, populated by api callbacks.
   static payees: Record<string, PayeeConfig> = {};
-
-  // Account pool membership and claim commissions, populated by api callbacks.
-  static poolMemberships: Record<string, PoolMembership> = {};
 
   // Account nominations, populated by api callbacks.
   static nominations: Record<string, Nominations> = {};
@@ -70,9 +65,9 @@ export class BalancesController {
     SyncController.dispatch('balances', 'syncing');
 
     // Subscribe to and add new accounts data.
-    accountsAdded.forEach(async (address) => {
+    for (const address of accountsAdded) {
       this.accounts.push(address);
-      const unsub = await api.queryMulti(
+      this.#unsubs[address] = await api.queryMulti(
         [
           [api.query.staking.ledger, address],
           [api.query.system.account, address],
@@ -87,22 +82,11 @@ export class BalancesController {
           accountResult,
           locksResult,
           payeeResult,
-          poolMembersResult,
-          claimPermissionsResult,
           nominatorsResult,
         ]): Promise<void> => {
           this.handleLedgerCallback(address, ledgerResult);
           this.handleAccountCallback(address, accountResult, locksResult);
           this.handlePayeeCallback(address, payeeResult);
-
-          // NOTE: async: contains runtime call for pending rewards.
-          await this.handlePoolMembershipCallback(
-            api,
-            address,
-            poolMembersResult,
-            claimPermissionsResult
-          );
-
           this.handleNominations(address, nominatorsResult);
 
           // Send updated account state back to UI.
@@ -113,15 +97,13 @@ export class BalancesController {
                 ledger: this.ledgers[address],
                 balances: this.balances[address],
                 payee: this.payees[address],
-                poolMembership: this.poolMemberships[address],
                 nominations: this.nominations[address],
               },
             })
           );
         }
       );
-      this.#unsubs[address] = unsub;
-    });
+    }
   };
 
   // Remove accounts that no longer exist.
@@ -139,7 +121,6 @@ export class BalancesController {
       delete this.ledgers[account];
       delete this.balances[account];
       delete this.payees[account];
-      delete this.poolMemberships[account];
       delete this.nominations[account];
     });
     // Remove removed accounts from class.
@@ -229,51 +210,6 @@ export class BalancesController {
     }
   };
 
-  // Handle pool membership and claim commission callback.
-  static handlePoolMembershipCallback = async (
-    api: ApiPromise,
-    address: string,
-    poolMembersResult: AnyApi,
-    claimPermissionsResult: AnyApi
-  ): Promise<void> => {
-    // If pool membership is `null`, remove pool membership data from class data and exit early.
-    // This skips claim permission data as well as user would not have claim permissions if they are
-    // not in a pool.
-    const membership = poolMembersResult?.unwrapOr(undefined)?.toHuman();
-    if (!membership) {
-      delete this.poolMemberships[address];
-      return;
-    }
-
-    // Format pool membership data.
-    const unlocking = Object.entries(membership?.unbondingEras || {}).map(
-      ([e, v]) => ({
-        era: Number(rmCommas(e as string)),
-        value: new BigNumber(rmCommas(v as string)),
-      })
-    );
-    membership.points = rmCommas(membership?.points || '0');
-    const balance = new BigNumber(
-      (
-        await api.call.nominationPoolsApi.pointsToBalance(
-          membership.poolId,
-          membership.points
-        )
-      )?.toString() || '0'
-    );
-    const claimPermission =
-      claimPermissionsResult?.toString() || 'Permissioned';
-
-    // Persist formatted pool membership data to class.
-    this.poolMemberships[address] = {
-      ...membership,
-      address,
-      balance,
-      claimPermission,
-      unlocking,
-    };
-  };
-
   // Handle nominations callback.
   static handleNominations = (
     address: string,
@@ -295,7 +231,6 @@ export class BalancesController {
     const ledger = this.ledgers[address];
     const balances = this.balances[address];
     const payee = this.payees[address];
-    const poolMembership = this.poolMemberships[address];
     const nominations = this.nominations[address];
 
     if (balances === undefined) {
@@ -307,7 +242,6 @@ export class BalancesController {
       ledger,
       balances,
       payee,
-      poolMembership,
       nominations,
     };
   };

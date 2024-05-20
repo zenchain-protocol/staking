@@ -12,7 +12,7 @@ import { useTransferOptions } from 'contexts/TransferOptions';
 import { CardHeaderWrapper } from 'library/Card/Wrappers';
 import { Close } from 'library/Modal/Close';
 import { Title } from 'library/Modal/Title';
-import { SliderWrapper } from 'modals/ManagePool/Wrappers';
+import { SliderWrapper } from 'modals/UpdateReserve/Wrappers';
 import 'rc-slider/assets/index.css';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
@@ -39,7 +39,7 @@ export const UpdateReserve = () => {
   const { edReserved } = getTransferOptions(activeAccount);
   const minReserve = planckToUnit(edReserved, units);
   const maxReserve = minReserve.plus(
-    ['polkadot', 'zenchain'].includes(network) ? 3 : 1
+    ['polkadot', 'zenchain_testnet'].includes(network) ? 3 : 1
   );
 
   const [sliderReserve, setSliderReserve] = useState<number>(

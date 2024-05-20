@@ -5,7 +5,6 @@ import { setStateWithRef } from '@w3ux/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBalances } from 'contexts/Balances';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { Title } from 'library/Modal/Title';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
@@ -27,25 +26,12 @@ export const UnlockChunks = () => {
   } = useOverlay().modal;
   const { getLedger } = useBalances();
   const { notEnoughFunds } = useTxMeta();
-  const { getPoolUnlocking } = useActivePool();
   const { activeAccount } = useActiveAccounts();
   const { integrityChecked } = useLedgerHardware();
   const { bondFor } = options || {};
 
-  // get the unlocking per bondFor
-  const getUnlocking = () => {
-    let unlocking = [];
-    let ledger;
-    switch (bondFor) {
-      case 'pool':
-        unlocking = getPoolUnlocking();
-        break;
-      default:
-        ledger = getLedger({ stash: activeAccount });
-        unlocking = ledger.unlocking;
-    }
-    return unlocking;
-  };
+  // get the unlocking
+  const getUnlocking = () => getLedger({ stash: activeAccount }).unlocking;
 
   const unlocking = getUnlocking();
 

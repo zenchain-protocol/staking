@@ -15,18 +15,13 @@ export const Header = ({
   helpKey,
   complete,
   thisSection,
-  bondFor,
 }: HeaderProps) => {
   const { t } = useTranslation('library');
   const { openHelp } = useHelp();
   const { activeAccount } = useActiveAccounts();
-  const { getPoolSetup, getNominatorSetup, setActiveAccountSetupSection } =
-    useSetup();
+  const { getNominatorSetup, setActiveAccountSetupSection } = useSetup();
 
-  const setup =
-    bondFor === 'nominator'
-      ? getNominatorSetup(activeAccount)
-      : getPoolSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount);
 
   return (
     <Wrapper>
@@ -46,7 +41,7 @@ export const Header = ({
                 <ButtonSecondary
                   text={t('update')}
                   onClick={() => {
-                    setActiveAccountSetupSection(bondFor, thisSection);
+                    setActiveAccountSetupSection(thisSection);
                   }}
                 />
               </span>

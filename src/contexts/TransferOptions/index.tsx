@@ -31,9 +31,8 @@ export const TransferOptionsProvider = ({
   } = useNetwork();
   const { consts, activeEra } = useApi();
   const { activeAccount } = useActiveAccounts();
-  const { getLedger, getBalance, getLocks, getPoolMembership } = useBalances();
+  const { getLedger, getBalance, getLocks } = useBalances();
   const { existentialDeposit } = consts;
-  const membership = getPoolMembership(activeAccount);
 
   // A user-configurable reserve amount to be used to pay for transaction fees.
   const [feeReserve, setFeeReserve] = useState<BigNumber>(
@@ -90,29 +89,12 @@ export const TransferOptionsProvider = ({
       };
     };
 
-    const poolBalances = () => {
-      const unlockingPool = membership?.unlocking || [];
-      const {
-        totalUnlocking: totalUnlockingPool,
-        totalUnlocked: totalUnlockedPool,
-      } = getUnlocking(unlockingPool, activeEra.index);
-
-      return {
-        active: membership?.balance || new BigNumber(0),
-        totalUnlocking: totalUnlockingPool,
-        totalUnlocked: totalUnlockedPool,
-        totalPossibleBond: BigNumber.max(freeMinusReserve.minus(maxLock), 0),
-        totalUnlockChunks: unlockingPool.length,
-      };
-    };
-
     return {
       freeBalance,
       transferrableBalance,
       balanceTxFees,
       edReserved,
       nominate: nominatorBalances(),
-      pool: poolBalances(),
     };
   };
 

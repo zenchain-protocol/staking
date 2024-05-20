@@ -40,7 +40,7 @@ export const Bond = ({ section }: SetupStepProps) => {
       bond: value.bond.toString() || '0',
     });
     // set nominator progress bond value.
-    setActiveAccountSetup('nominator', {
+    setActiveAccountSetup({
       ...progress,
       bond: value.bond.toString(),
     });
@@ -57,7 +57,7 @@ export const Bond = ({ section }: SetupStepProps) => {
   useEffect(() => {
     // only update if Bond is currently active
     if (setup.section === section) {
-      setActiveAccountSetup('nominator', {
+      setActiveAccountSetup({
         ...progress,
         bond: initialBondValue,
       });

@@ -1,7 +1,7 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { greaterThanZero, rmCommas, shuffle } from '@w3ux/utils';
+import { rmCommas, shuffle } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -45,7 +45,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     isReady,
     api,
     consts: { historyDepth },
-    networkMetrics: { earliestStoredSession },
   } = useApi();
   const { activeEra } = useApi();
   const { stakers } = useStaking().eraStakers;
@@ -284,9 +283,9 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // The validator entries for the current active era.
-    let validatorEntries: Validator[] = [];
+    let validatorEntries: Validator[];
     // Average network commission for all non 100% commissioned validators.
-    let avg = 0;
+    let avg: number;
 
     if (localEraValidators) {
       validatorEntries = localEraValidators.entries;
@@ -333,20 +332,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     }
     const sessionValidatorsRaw: AnyApi = await api.query.session.validators();
     setSessionValidators(sessionValidatorsRaw.toHuman());
-  };
-
-  // Subscribe to active parachain validators.
-  const subscribeParachainValidators = async () => {
-    if (!api || !isReady) {
-      return;
-    }
-    const unsub: AnyApi = await api.query.paraSessionInfo.accountKeys(
-      earliestStoredSession.toString(),
-      (v: AnyApi) => {
-        setSessionParaValidators(v.toHuman());
-        sessionParaUnsub.current = unsub;
-      }
-    );
   };
 
   // Fetches prefs for a list of validators.
@@ -555,13 +540,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
       calculateEraPointsBoundaries();
     }
   }, [isReady, erasRewardPoints]);
-
-  // Fetch parachain session validators when `earliestStoredSession` ready.
-  useEffectIgnoreInitial(() => {
-    if (isReady && greaterThanZero(earliestStoredSession)) {
-      subscribeParachainValidators();
-    }
-  }, [isReady, earliestStoredSession]);
 
   // Unsubscribe on network change and component unmount.
   useEffect(() => {

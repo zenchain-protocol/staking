@@ -17,10 +17,6 @@ import { MenuProvider } from 'contexts/Menu';
 import { MigrateProvider } from 'contexts/Migrate';
 import { PromptProvider } from 'contexts/Prompt';
 import { PluginsProvider } from 'contexts/Plugins';
-import { ActivePoolProvider } from 'contexts/Pools/ActivePool';
-import { BondedPoolsProvider } from 'contexts/Pools/BondedPools';
-import { PoolMembersProvider } from 'contexts/Pools/PoolMembers';
-import { FavoritePoolsProvider } from 'contexts/Pools/FavoritePools';
 import { ProxiesProvider } from 'contexts/Proxies';
 import { SetupProvider } from 'contexts/Setup';
 import { StakingProvider } from 'contexts/Staking';
@@ -38,13 +34,11 @@ import { OtherAccountsProvider } from 'contexts/Connect/OtherAccounts';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { DappName } from 'consts';
 import { ImportedAccountsProvider } from 'contexts/Connect/ImportedAccounts';
-import { PoolPerformanceProvider } from 'contexts/Pools/PoolPerformance';
 import { ExternalAccountsProvider } from 'contexts/Connect/ExternalAccounts';
 import type { Provider } from 'hooks/withProviders';
 import { withProviders } from 'hooks/withProviders';
 import { CommunityProvider } from 'contexts/Community';
 import { OverlayProvider } from 'kits/Overlay/Provider';
-import { JoinPoolsProvider } from 'contexts/Pools/JoinPools';
 
 export const Providers = () => {
   const { network } = useNetwork();
@@ -74,17 +68,11 @@ export const Providers = () => {
     BondedProvider,
     BalancesProvider,
     StakingProvider,
-    FavoritePoolsProvider,
-    BondedPoolsProvider,
-    PoolMembersProvider,
-    ActivePoolProvider,
     TransferOptionsProvider,
     ValidatorsProvider,
     FavoriteValidatorsProvider,
     FastUnstakeProvider,
     PayoutsProvider,
-    PoolPerformanceProvider,
-    JoinPoolsProvider,
     SetupProvider,
     MenuProvider,
     TooltipProvider,

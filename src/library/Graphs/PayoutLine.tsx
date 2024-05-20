@@ -25,8 +25,6 @@ import {
   combineRewards,
   formatRewardsForGraphs,
 } from './Utils';
-import { useBalances } from 'contexts/Balances';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 
 ChartJS.register(
@@ -50,13 +48,9 @@ export const PayoutLine = ({
   const { mode } = useTheme();
   const { inSetup } = useStaking();
   const { syncing } = useSyncing(['balances']);
-  const { getPoolMembership } = useBalances();
-  const { activeAccount } = useActiveAccounts();
 
   const { unit, units, colors } = useNetwork().networkData;
-  const poolMembership = getPoolMembership(activeAccount);
-  const notStaking = !syncing && inSetup() && !poolMembership;
-  const inPoolOnly = !syncing && inSetup() && !!poolMembership;
+  const notStaking = !syncing && inSetup();
 
   // remove slashes from payouts (graph does not support negative values).
   const payoutsNoSlash = payouts?.filter((p) => p.event_id !== 'Slashed') || [];
@@ -88,11 +82,7 @@ export const PayoutLine = ({
   );
 
   // determine color for payouts
-  const color = notStaking
-    ? colors.primary[mode]
-    : !inPoolOnly
-      ? colors.primary[mode]
-      : colors.secondary[mode];
+  const color = notStaking ? colors.primary[mode] : colors.primary[mode];
 
   // configure graph options
   const options = {

@@ -17,10 +17,13 @@ import BigNumber from 'bignumber.js';
 //
 // Temporary until paged rewards migration has completed on all networks. Wait 84 eras from Polkadot
 // start: 1420 + 84 = 1504, when full history depth will be moved over to new paged rewards storage.
-export const NetworksWithPagedRewards: NetworkName[] = ['polkadot', 'zenchain'];
+export const NetworksWithPagedRewards: NetworkName[] = [
+  'polkadot',
+  'zenchain_testnet',
+];
 export const PagedRewardsStartEra: Record<NetworkName, BigNumber | null> = {
   polkadot: new BigNumber(1420),
-  zenchain: new BigNumber(1),
+  zenchain_testnet: new BigNumber(1),
 };
 
 export const NetworkList: Networks = {
@@ -40,7 +43,6 @@ export const NetworkList: Networks = {
         Stakeworld: 'wss://dot-rpc.stakeworld.io',
       },
     },
-    namespace: '91b171bb158e2d3848fa23a9f1c25182',
     colors: {
       primary: {
         light: 'rgb(211, 48, 121)',
@@ -86,15 +88,14 @@ export const NetworkList: Networks = {
     maxExposurePageSize: new BigNumber(512),
   },
   zenchain: {
-    name: 'zenchain',
+    name: 'zenchain_testnet',
     endpoints: {
-      lightClient: 'zenchain',
+      lightClient: 'zenchain_testnet',
       defaultRpcEndpoint: 'localhost',
       rpcEndpoints: {
         localhost: 'ws://localhost:9944',
       },
     },
-    namespace: 'b0a8d493285c2df73290dfb7e61f870f',
     colors: {
       primary: {
         light: 'rgb(31, 41, 55)',

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { ApiPromise } from '@polkadot/api';
-import type { U8aLike } from '@polkadot/util/types';
 import type BigNumber from 'bignumber.js';
 import type { ReactNode } from 'react';
 import type { AnyJson, NetworkName } from '../../types';
@@ -30,13 +29,10 @@ export interface APIConstants {
   epochDuration: BigNumber;
   existentialDeposit: BigNumber;
   fastUnstakeDeposit: BigNumber;
-  poolsPalletId: U8aLike;
 }
 
 export interface APINetworkMetrics {
   totalIssuance: BigNumber;
-  auctionCounter: BigNumber;
-  earliestStoredSession: BigNumber;
   fastUnstakeErasToCheckPerBlock: number;
   minimumActiveStake: BigNumber;
 }
@@ -44,19 +40,6 @@ export interface APINetworkMetrics {
 export interface APIActiveEra {
   index: BigNumber;
   start: BigNumber;
-}
-
-export interface APIPoolsConfig {
-  counterForPoolMembers: BigNumber;
-  counterForBondedPools: BigNumber;
-  counterForRewardPools: BigNumber;
-  lastPoolId: BigNumber;
-  maxPoolMembers: BigNumber | null;
-  maxPoolMembersPerPool: BigNumber | null;
-  maxPools: BigNumber | null;
-  minCreateBond: BigNumber;
-  minJoinBond: BigNumber;
-  globalMaxCommission: number;
 }
 
 export interface APIStakingMetrics {
@@ -82,7 +65,6 @@ export interface APIContextInterface {
   consts: APIConstants;
   networkMetrics: APINetworkMetrics;
   activeEra: APIActiveEra;
-  poolsConfig: APIPoolsConfig;
   stakingMetrics: APIStakingMetrics;
   isPagedRewardsActive: (era: BigNumber) => boolean;
 }

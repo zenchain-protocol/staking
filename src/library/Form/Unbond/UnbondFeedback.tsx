@@ -5,7 +5,6 @@ import { isNotZero, planckToUnit, unitToPlanck } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useNetwork } from 'contexts/Network';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
@@ -17,7 +16,6 @@ import { useApi } from 'contexts/Api';
 
 export const UnbondFeedback = ({
   bondFor,
-  inSetup = false,
   setters = [],
   listenIsValid,
   defaultBond,
@@ -30,19 +28,16 @@ export const UnbondFeedback = ({
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { isDepositor } = useActivePool();
   const { activeAccount } = useActiveAccounts();
   const { getTransferOptions } = useTransferOptions();
   const {
-    poolsConfig: { minJoinBond, minCreateBond },
     stakingMetrics: { minNominatorBond },
   } = useApi();
   const allTransferOptions = getTransferOptions(activeAccount);
   const defaultValue = defaultBond ? String(defaultBond) : '';
 
   // get bond options for either nominating or pooling.
-  const transferOptions =
-    bondFor === 'pool' ? allTransferOptions.pool : allTransferOptions.nominate;
+  const transferOptions = allTransferOptions.nominate;
   const { active } = transferOptions;
 
   // store errors
@@ -65,30 +60,16 @@ export const UnbondFeedback = ({
   setters.push(handleSetBond);
 
   // bond amount to minimum threshold
-  const minBondBn =
-    bondFor === 'pool'
-      ? inSetup || isDepositor()
-        ? minCreateBond
-        : minJoinBond
-      : minNominatorBond;
-  const minBondUnit = planckToUnit(minBondBn, units);
+  const minBondUnit = planckToUnit(minNominatorBond, units);
 
   // unbond amount to minimum threshold
-  const unbondToMin =
-    bondFor === 'pool'
-      ? inSetup || isDepositor()
-        ? BigNumber.max(active.minus(minCreateBond), 0)
-        : BigNumber.max(active.minus(minJoinBond), 0)
-      : BigNumber.max(active.minus(minNominatorBond), 0);
+  const unbondToMin = BigNumber.max(active.minus(minNominatorBond), 0);
 
   // check if bonded is below the minimum required
   const nominatorActiveBelowMin =
     bondFor === 'nominator' &&
     isNotZero(active) &&
     active.isLessThan(minNominatorBond);
-  const poolToMinBn = isDepositor() ? minCreateBond : minJoinBond;
-  const poolActiveBelowMin =
-    bondFor === 'pool' && active.isLessThan(poolToMinBn);
 
   // handle error updates
   const handleErrors = () => {
@@ -116,10 +97,6 @@ export const UnbondFeedback = ({
       // append the subject to the error message.
       if (bondFor === 'nominator') {
         err += t('whenActivelyNominating');
-      } else if (isDepositor()) {
-        err += t('asThePoolDepositor');
-      } else {
-        err += t('asAPoolMember');
       }
       newErrors.push(err);
     }
@@ -160,9 +137,7 @@ export const UnbondFeedback = ({
       <UnbondInput
         active={active}
         defaultValue={defaultValue}
-        disabled={
-          active.isZero() || nominatorActiveBelowMin || poolActiveBelowMin
-        }
+        disabled={active.isZero() || nominatorActiveBelowMin}
         unbondToMin={unbondToMin}
         setters={setters}
         value={bond.bond}

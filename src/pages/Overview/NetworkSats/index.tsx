@@ -1,9 +1,7 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { CardHeaderWrapper, CardWrapper } from 'library/Card/Wrappers';
 import { Header } from 'library/Announcements/Header';
 import { Wrapper } from 'library/Announcements/Wrappers';
@@ -13,7 +11,6 @@ import { useApi } from 'contexts/Api';
 
 export const NetworkStats = () => {
   const { t } = useTranslation('pages');
-  const { bondedPools } = useBondedPools();
   const { getAverageRewardRate } = useAverageRewardRate();
   const { totalNominators, totalValidators } = useApi().stakingMetrics;
 
@@ -29,11 +26,6 @@ export const NetworkStats = () => {
       label: t('overview.totalNominators'),
       value: totalNominators.toFormat(0),
       helpKey: 'Total Nominators',
-    },
-    {
-      label: t('overview.activePools'),
-      value: new BigNumber(bondedPools.length).toFormat(),
-      helpKey: 'Active Pools',
     },
     {
       label: t('overview.latestInflationRate'),

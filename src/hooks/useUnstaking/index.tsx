@@ -20,7 +20,7 @@ export const useUnstaking = () => {
   const { checking, head, isExposed, queueDeposit, meta } = useFastUnstake();
   const { bondDuration } = consts;
   const transferOptions = getTransferOptions(activeAccount).nominate;
-  const { nominees } = getNominationStatus(activeAccount, 'nominator');
+  const { nominees } = getNominationStatus(activeAccount);
 
   // determine if user is regular unstaking
   const { active } = transferOptions;

@@ -11,11 +11,9 @@ import type { PayoutType } from 'controllers/SubscanController/types';
 import type {
   APIActiveEra,
   APINetworkMetrics,
-  APIPoolsConfig,
   APIStakingMetrics,
 } from 'contexts/Api/types';
 import type { SyncEvent } from 'controllers/SyncController/types';
-import type { DetailActivePool } from 'controllers/ActivePoolsController/types';
 import type { CSSProperties } from 'styled-components';
 import type { APIEventDetail } from 'model/Api/types';
 import type { OnlineStatusEvent } from 'controllers/OnlineStatusController/types';
@@ -35,11 +33,9 @@ declare global {
       networkMetrics: APINetworkMetrics;
     }>;
     'new-active-era': CustomEvent<{ activeEra: APIActiveEra }>;
-    'new-pools-config': CustomEvent<{ poolsConfig: APIPoolsConfig }>;
     'new-staking-metrics': CustomEvent<{
       stakingMetrics: APIStakingMetrics;
     }>;
-    'new-active-pool': CustomEvent<DetailActivePool>;
     'new-sync-status': CustomEvent<SyncEvent>;
     'new-external-account': CustomEvent<{ address: string }>;
     'new-account-balance': CustomEvent<ActiveBalance & { address: string }>;
@@ -47,7 +43,7 @@ declare global {
   }
 }
 
-export type NetworkName = 'polkadot' | 'zenchain';
+export type NetworkName = 'polkadot' | 'zenchain_testnet';
 
 export type Networks = Record<string, Network>;
 
@@ -64,7 +60,6 @@ export interface Network {
     defaultRpcEndpoint: string;
     rpcEndpoints: Record<string, string>;
   };
-  namespace: string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   colors: Record<NetworkColor, { [key in Theme]: string }>;
   unit: string;
@@ -137,7 +132,7 @@ export type MaybeString = string | null;
 export type Sync = 'unsynced' | 'syncing' | 'synced';
 
 // track whether bonding should be for nominator or nomination pool.
-export type BondFor = 'pool' | 'nominator';
+export type BondFor = 'nominator';
 
 // which medium components are being displayed on.
 export type DisplayFor = 'default' | 'modal' | 'canvas' | 'card';

@@ -4,7 +4,6 @@
 import { faCog, faStopCircle } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
 import { useHelp } from 'contexts/Help';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useStaking } from 'contexts/Staking';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
 import { CardHeaderWrapper } from 'library/Card/Wrappers';
@@ -25,16 +24,10 @@ export const Nominations = ({
   bondFor,
   nominator,
 }: {
-  bondFor: 'pool' | 'nominator';
+  bondFor: 'nominator';
   nominator: MaybeAddress;
 }) => {
   const { t } = useTranslation('pages');
-  const {
-    activePool,
-    activePoolNominations,
-    isOwner: isPoolOwner,
-    isNominator: isPoolNominator,
-  } = useActivePool();
   const { openHelp } = useHelp();
   const { inSetup } = useStaking();
   const {
@@ -48,45 +41,27 @@ export const Nominations = ({
   const { activeAccount } = useActiveAccounts();
   const { isReadOnlyAccount } = useImportedAccounts();
 
-  // Determine if pool or nominator.
-  const isPool = bondFor === 'pool';
-
   // Derive nominations from `bondFor` type.
   const nominated =
     bondFor === 'nominator'
       ? formatWithPrefs(getNominations(activeAccount))
-      : activePoolNominations
-        ? formatWithPrefs(activePoolNominations.targets)
-        : [];
-
-  // Determine if this nominator is actually nominating.
-  const isNominating = nominated?.length ?? false;
-
-  // Determine whether this is a pool that is in Destroying state & not nominating.
-  const poolDestroying =
-    isPool && activePool?.bondedPool?.state === 'Destroying' && !isNominating;
+      : [];
 
   // Determine whether to display buttons.
   //
   // If regular staking and nominating, or if pool and account is nominator or root, display stop
   // button.
-  const displayBtns =
-    (!isPool && nominated.length) ||
-    (isPool && (isPoolNominator() || isPoolOwner()));
+  const displayBtns = nominated.length;
 
   // Determine whether buttons are disabled.
   const btnsDisabled =
-    (!isPool && inSetup()) ||
-    (!isPool && syncing) ||
-    isReadOnlyAccount(activeAccount) ||
-    poolDestroying ||
-    isFastUnstaking;
+    inSetup() || syncing || isReadOnlyAccount(activeAccount) || isFastUnstaking;
 
   return (
     <Wrapper>
       <CardHeaderWrapper $withAction $withMargin>
         <h3>
-          {isPool ? t('nominate.poolNominations') : t('nominate.nominations')}
+          {t('nominate.nominations')}
           <ButtonHelp marginLeft onClick={() => openHelp('Nominations')} />
         </h3>
         <div>
@@ -131,7 +106,7 @@ export const Nominations = ({
           )}
         </div>
       </CardHeaderWrapper>
-      {!isPool && syncing ? (
+      {syncing ? (
         <ListStatusHeader>{`${t('nominate.syncing')}...`}</ListStatusHeader>
       ) : !nominator ? (
         <ListStatusHeader>{t('nominate.notNominating')}.</ListStatusHeader>
@@ -145,8 +120,6 @@ export const Nominations = ({
           allowMoreCols
           allowListFormat={false}
         />
-      ) : poolDestroying ? (
-        <ListStatusHeader>{t('nominate.poolDestroy')}</ListStatusHeader>
       ) : (
         <ListStatusHeader>{t('nominate.notNominating')}.</ListStatusHeader>
       )}

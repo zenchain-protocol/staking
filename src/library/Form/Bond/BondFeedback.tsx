@@ -5,7 +5,6 @@ import { planckToUnit, unitToPlanck } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useNetwork } from 'contexts/Network';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
@@ -33,10 +32,8 @@ export const BondFeedback = ({
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { isDepositor } = useActivePool();
   const { activeAccount } = useActiveAccounts();
   const {
-    poolsConfig: { minJoinBond, minCreateBond },
     stakingMetrics: { minNominatorBond },
   } = useApi();
   const { getTransferOptions } = useTransferOptions();
@@ -85,13 +82,8 @@ export const BondFeedback = ({
   setters.push(handleSetBond);
 
   // bond amount to minimum threshold.
-  const minBondBn =
-    bondFor === 'pool'
-      ? inSetup || isDepositor()
-        ? minCreateBond
-        : minJoinBond
-      : minNominatorBond;
-  const minBondUnit = planckToUnit(minBondBn, units);
+  const minBondBn = minNominatorBond;
+  const minBondUnit = planckToUnit(minNominatorBond, units);
 
   // handle error updates
   const handleErrors = () => {

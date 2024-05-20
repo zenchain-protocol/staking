@@ -6,10 +6,8 @@ import BigNumber from 'bignumber.js';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from 'contexts/Api';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { BondFeedback } from 'library/Form/Bond/BondFeedback';
-import { Warning } from 'library/Form/Warning';
 import { useBondGreatestFee } from 'hooks/useBondGreatestFee';
 import { useSignerWarnings } from 'hooks/useSignerWarnings';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
@@ -20,17 +18,15 @@ import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
-import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 
 export const Bond = () => {
   const { t } = useTranslation('modals');
   const { api } = useApi();
   const {
-    networkData: { units, unit },
+    networkData: { units },
   } = useNetwork();
   const { notEnoughFunds } = useTxMeta();
   const { activeAccount } = useActiveAccounts();
-  const { pendingPoolRewards } = useActivePool();
   const { getSignerWarnings } = useSignerWarnings();
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const {
@@ -41,7 +37,6 @@ export const Bond = () => {
 
   const { bondFor } = options;
   const isStaking = bondFor === 'nominator';
-  const isPooling = bondFor === 'pool';
   const { nominate, transferrableBalance } = getTransferOptions(activeAccount);
 
   const freeToBond = planckToUnit(
@@ -53,9 +48,6 @@ export const Bond = () => {
   );
 
   const largestTxFee = useBondGreatestFee({ bondFor });
-
-  // Format unclaimed pool rewards.
-  const pendingRewardsUnit = planckToUnit(pendingPoolRewards, units);
 
   // local bond value.
   const [bond, setBond] = useState<{ bond: string }>({
@@ -103,11 +95,7 @@ export const Bond = () => {
         ? '0'
         : bondToSubmit.toString();
 
-    if (isPooling) {
-      tx = api.tx.nominationPools.bondExtra({
-        FreeBalance: bondAsString,
-      });
-    } else if (isStaking) {
+    if (isStaking) {
       tx = api.tx.staking.bondExtra(bondAsString);
     }
     return tx;
@@ -152,13 +140,6 @@ export const Bond = () => {
       <Close />
       <ModalPadding>
         <h2 className="title unbounded">{t('addToBond')}</h2>
-        {pendingRewardsUnit.isGreaterThan(0) && bondFor === 'pool' ? (
-          <ModalWarnings withMargin>
-            <Warning
-              text={`${t('bondingWithdraw')} ${pendingRewardsUnit} ${unit}.`}
-            />
-          </ModalWarnings>
-        ) : null}
         <BondFeedback
           syncing={largestTxFee.isZero()}
           bondFor={bondFor}

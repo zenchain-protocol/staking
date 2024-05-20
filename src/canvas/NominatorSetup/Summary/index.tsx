@@ -76,7 +76,7 @@ export const Summary = ({ section }: SetupStepProps) => {
       closeCanvas();
 
       // Reset setup progress.
-      removeSetupProgress('nominator', activeAccount);
+      removeSetupProgress(activeAccount);
     },
   });
 

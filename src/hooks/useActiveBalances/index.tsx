@@ -24,7 +24,6 @@ import {
   defaultPayee,
 } from 'controllers/BalancesController/defaults';
 import type { PayeeConfig } from 'contexts/Setup/types';
-import type { PoolMembership } from 'contexts/Pools/types';
 
 export const useActiveBalances = ({
   accounts,
@@ -102,17 +101,6 @@ export const useActiveBalances = ({
       }
     }
     return defaultPayee;
-  };
-
-  // Gets an active balance's pool membership.
-  const getPoolMembership = (address: MaybeAddress): PoolMembership | null => {
-    if (address) {
-      const maybePoolMembership = activeBalances[address]?.poolMembership;
-      if (maybePoolMembership) {
-        return maybePoolMembership;
-      }
-    }
-    return null;
   };
 
   // Gets the amount of balance reserved for existential deposit.
@@ -200,7 +188,6 @@ export const useActiveBalances = ({
     getBalance,
     getLedger,
     getPayee,
-    getPoolMembership,
     getEdReserved,
     getNominations,
   };

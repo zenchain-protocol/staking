@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type BigNumber from 'bignumber.js';
-import type { PoolMembership } from 'contexts/Pools/types';
 import type { Proxy } from 'contexts/Proxies/types';
 import type { MaybeAddress } from 'types';
 
@@ -21,10 +20,6 @@ export interface DelegatesProps {
   delegates: Proxy | undefined;
 }
 
-export interface AccountInPool extends PoolMembership {
-  delegates?: Proxy;
-}
-
 export interface AccountNominating {
   address: MaybeAddress;
   stashImported: boolean;
@@ -35,5 +30,3 @@ export interface AccountNotStaking {
   address: string;
   delegates?: Proxy;
 }
-
-export type AccountNominatingAndInPool = AccountNominating & AccountInPool;

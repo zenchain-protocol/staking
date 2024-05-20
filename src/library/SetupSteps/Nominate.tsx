@@ -17,19 +17,16 @@ export const Nominate = ({ bondFor, section }: NominationsProps) => {
   const { t } = useTranslation('library');
   const { consts } = useApi();
   const { activeAccount } = useActiveAccounts();
-  const { getNominatorSetup, getPoolSetup, setActiveAccountSetup } = useSetup();
+  const { getNominatorSetup, setActiveAccountSetup } = useSetup();
 
-  const setup =
-    bondFor === 'nominator'
-      ? getNominatorSetup(activeAccount)
-      : getPoolSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount);
 
   const { progress } = setup;
   const { maxNominations } = consts;
 
   // Handler for updating setup.
   const handleSetupUpdate = (value: AnyJson) => {
-    setActiveAccountSetup(bondFor, value);
+    setActiveAccountSetup(value);
   };
 
   return (
@@ -54,11 +51,7 @@ export const Nominate = ({ bondFor, section }: NominationsProps) => {
             {
               current: {
                 callable: true,
-                fn: () =>
-                  (bondFor === 'nominator'
-                    ? getNominatorSetup(activeAccount)
-                    : getPoolSetup(activeAccount)
-                  ).progress,
+                fn: () => getNominatorSetup(activeAccount).progress,
               },
               set: handleSetupUpdate,
             },

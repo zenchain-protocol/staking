@@ -40,7 +40,7 @@ export const Payee = ({ section }: SetupStepProps) => {
   // update setup progress with payee config.
   const handleChangeDestination = (destination: PayeeOptions) => {
     // set local value to update input element set setup payee
-    setActiveAccountSetup('nominator', {
+    setActiveAccountSetup({
       ...progress,
       payee: { destination, account },
     });
@@ -49,7 +49,7 @@ export const Payee = ({ section }: SetupStepProps) => {
   // update setup progress with payee account.
   const handleChangeAccount = (newAccount: MaybeAddress) => {
     // set local value to update input element set setup payee
-    setActiveAccountSetup('nominator', {
+    setActiveAccountSetup({
       ...progress,
       payee: { ...payee, account: newAccount },
     });
@@ -58,7 +58,7 @@ export const Payee = ({ section }: SetupStepProps) => {
   // set initial payee value to `Staked` if not yet set.
   useEffect(() => {
     if (!payee || (!payee.destination && !payee.account)) {
-      setActiveAccountSetup('nominator', {
+      setActiveAccountSetup({
         ...progress,
         payee: defaultPayee,
       });

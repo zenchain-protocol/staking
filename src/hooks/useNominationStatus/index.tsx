@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useTranslation } from 'react-i18next';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { useStaking } from 'contexts/Staking';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
-import type { AnyJson, BondFor, MaybeAddress } from 'types';
+import type { AnyJson, MaybeAddress } from 'types';
 import { useSyncing } from 'hooks/useSyncing';
 import { useBalances } from 'contexts/Balances';
 
@@ -14,16 +13,11 @@ export const useNominationStatus = () => {
   const { validators } = useValidators();
   const { getNominations } = useBalances();
   const { syncing } = useSyncing(['era-stakers']);
-  const { activePoolNominations } = useActivePool();
   const { inSetup, eraStakers, getNominationsStatusFromTargets } = useStaking();
 
   // Utility to get an account's nominees alongside their status.
-  const getNominationSetStatus = (who: MaybeAddress, type: BondFor) => {
-    const nominations =
-      type === 'nominator'
-        ? getNominations(who)
-        : activePoolNominations?.targets ?? [];
-
+  const getNominationSetStatus = (who: MaybeAddress) => {
+    const nominations = getNominations(who);
     return getNominationsStatusFromTargets(who, nominations);
   };
 
@@ -35,9 +29,9 @@ export const useNominationStatus = () => {
 
   // Utility to get the status of the provided account's nominations, and whether they are earning
   // reards.
-  const getNominationStatus = (who: MaybeAddress, type: BondFor) => {
+  const getNominationStatus = (who: MaybeAddress) => {
     // Get the sets nominees from the provided account's targets.
-    const nominees = Object.entries(getNominationSetStatus(who, type));
+    const nominees = Object.entries(getNominationSetStatus(who));
     const activeNominees = getNomineesByStatus(nominees, 'active');
 
     // Determine whether active nominees are earning rewards. This function exists once the

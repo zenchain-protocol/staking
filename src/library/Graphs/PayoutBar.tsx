@@ -24,8 +24,6 @@ import type { AnyJson, AnySubscan } from 'types';
 import { useNetwork } from 'contexts/Network';
 import type { PayoutBarProps } from './types';
 import { formatRewardsForGraphs } from './Utils';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useBalances } from 'contexts/Balances';
 import { useSyncing } from 'hooks/useSyncing';
 
 ChartJS.register(
@@ -47,13 +45,10 @@ export const PayoutBar = ({
   const { i18n, t } = useTranslation('library');
   const { mode } = useTheme();
   const { inSetup } = useStaking();
-  const { getPoolMembership } = useBalances();
   const { syncing } = useSyncing(['balances']);
-  const { activeAccount } = useActiveAccounts();
 
-  const membership = getPoolMembership(activeAccount);
   const { unit, units, colors } = useNetwork().networkData;
-  const notStaking = !syncing && inSetup() && !membership;
+  const notStaking = !syncing && inSetup();
 
   // remove slashes from payouts (graph does not support negative values).
   const payoutsNoSlash = payouts?.filter((p) => p.event_id !== 'Slashed') || [];

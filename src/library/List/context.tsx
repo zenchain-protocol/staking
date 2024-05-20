@@ -4,8 +4,11 @@
 import { createContext, useContext, useState } from 'react';
 import { defaultContext } from './defaults';
 import type { AnyJson } from 'types';
-import type { ListContextInterface, ListProviderProps } from './types';
-import type { ListFormat } from 'library/PoolList/types';
+import type {
+  ListContextInterface,
+  ListProviderProps,
+  ListFormat,
+} from './types';
 
 export const ListContext = createContext<ListContextInterface>(defaultContext);
 
@@ -41,7 +44,7 @@ export const ListProvider = ({
 
   const setSelectActive = (_selectActive: boolean) => {
     setSelectActiveState(_selectActive);
-    if (_selectActive === false) {
+    if (!_selectActive) {
       resetSelected();
     }
   };

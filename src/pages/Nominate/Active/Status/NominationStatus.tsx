@@ -39,7 +39,7 @@ export const NominationStatus = ({
 
   const fastUnstakeText = getFastUnstakeText();
   const controller = getBondedAccount(activeAccount);
-  const nominationStatus = getNominationStatus(activeAccount, 'nominator');
+  const nominationStatus = getNominationStatus(activeAccount);
 
   // Determine whether to display fast unstake button or regular unstake button.
   const unstakeButton =

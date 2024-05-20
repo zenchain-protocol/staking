@@ -11,7 +11,6 @@ export const useFillVariables = () => {
   const {
     consts,
     networkMetrics: { minimumActiveStake },
-    poolsConfig: { minJoinBond, minCreateBond },
   } = useApi();
   const { networkData } = useNetwork();
   const { maxNominations, maxExposurePageSize, existentialDeposit } = consts;
@@ -30,18 +29,6 @@ export const useFillVariables = () => {
           [
             '{MIN_ACTIVE_STAKE}',
             planckToUnit(minimumActiveStake, networkData.units)
-              .decimalPlaces(3)
-              .toFormat(),
-          ],
-          [
-            '{MIN_POOL_JOIN_BOND}',
-            planckToUnit(minJoinBond, networkData.units)
-              .decimalPlaces(3)
-              .toFormat(),
-          ],
-          [
-            '{MIN_POOL_CREATE_BOND}',
-            planckToUnit(minCreateBond, networkData.units)
               .decimalPlaces(3)
               .toFormat(),
           ],

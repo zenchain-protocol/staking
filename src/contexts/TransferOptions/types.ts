@@ -24,11 +24,4 @@ export interface TransferOptions {
     totalAdditionalBond: BigNumber;
     totalUnlockChunks: number;
   };
-  pool: {
-    active: BigNumber;
-    totalUnlocking: BigNumber;
-    totalUnlocked: BigNumber;
-    totalPossibleBond: BigNumber;
-    totalUnlockChunks: number;
-  };
 }

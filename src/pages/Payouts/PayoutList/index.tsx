@@ -10,7 +10,6 @@ import { motion } from 'framer-motion';
 import { Component, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from 'contexts/Api';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { StakingContext } from 'contexts/Staking';
 import { useTheme } from 'contexts/Themes';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
@@ -18,7 +17,6 @@ import { Header, List, Wrapper as ListWrapper } from 'library/List';
 import { MotionContainer } from 'library/List/MotionContainer';
 import { Pagination } from 'library/List/Pagination';
 import { Identity } from 'library/ListItem/Labels/Identity';
-import { PoolIdentity } from 'library/ListItem/Labels/PoolIdentity';
 import { DefaultLocale, locales } from 'locale';
 import type { AnySubscan } from 'types';
 import { useNetwork } from 'contexts/Network';
@@ -41,7 +39,6 @@ export const PayoutListInner = ({
   } = useNetwork();
   const { listFormat, setListFormat } = usePayoutList();
   const { validators } = useValidators();
-  const { bondedPools } = useBondedPools();
 
   // current page
   const [page, setPage] = useState<number>(1);
@@ -70,11 +67,8 @@ export const PayoutListInner = ({
     }
   }, [isReady, fetched, activeEra.index]);
 
-  // get list items to render
-  let listPayouts = [];
-
   // get throttled subset or entire list
-  listPayouts = payouts.slice(pageStart).slice(0, payoutsPerPage);
+  const listPayouts = payouts.slice(pageStart).slice(0, payoutsPerPage);
 
   if (!payouts.length) {
     return null;
@@ -126,14 +120,7 @@ export const PayoutListInner = ({
               (v) => v.address === p.validator_stash
             );
 
-            // get pool if it exists
-            const pool = bondedPools.find(({ id }) => id === p.pool_id);
-
-            const batchIndex = validator
-              ? validators.indexOf(validator)
-              : pool
-                ? bondedPools.indexOf(pool)
-                : 0;
+            const batchIndex = validator ? validators.indexOf(validator) : 0;
 
             return (
               <motion.div
@@ -179,14 +166,6 @@ export const PayoutListInner = ({
                               <Identity address={p.validator_stash} />
                             ) : (
                               <div>{ellipsisFn(p.validator_stash)}</div>
-                            ))}
-                          {label === t('payouts.poolClaim') &&
-                            (pool ? (
-                              <PoolIdentity pool={pool} />
-                            ) : (
-                              <h4>
-                                {t('payouts.fromPool')} {p.pool_id}
-                              </h4>
                             ))}
                           {label === t('payouts.slashed') && (
                             <h4>{t('payouts.deductedFromBond')}</h4>

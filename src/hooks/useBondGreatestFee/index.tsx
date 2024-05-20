@@ -47,11 +47,8 @@ export const useBondGreatestFee = ({ bondFor }: Props) => {
     if (!api) {
       return new BigNumber(0);
     }
-    if (bondFor === 'pool') {
-      tx = api.tx.nominationPools.bondExtra({
-        FreeBalance: bond,
-      });
-    } else if (bondFor === 'nominator') {
+
+    if (bondFor === 'nominator') {
       tx = api.tx.staking.bondExtra(bond);
     }
 

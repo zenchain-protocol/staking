@@ -12,8 +12,8 @@ export const LedgerApps: LedgerApp[] = [
     Icon: PolkadotSVG,
   },
   {
-    network: 'zenchain',
-    appName: 'Zenchain',
+    network: 'zenchain_testnet',
+    appName: 'Zenchain Testnet',
     Icon: KusamaSVG,
   },
 ];
