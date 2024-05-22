@@ -1,0 +1,45 @@
+// Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
+// SPDX-License-Identifier: GPL-3.0-only
+
+import { useContext, createContext, useState, useEffect } from 'react';
+import type { EthereumContextInterface, EthereumProviderProps } from './types';
+import { defaultEthereumContext } from './defaults';
+import { ethers } from 'ethers';
+import { NetworkList } from '../../config/networks';
+
+export const EthereumContext = createContext<EthereumContextInterface>(
+  defaultEthereumContext
+);
+
+export const useEthereum = () => useContext(EthereumContext);
+
+export const EthereumProvider = ({
+  children,
+  network,
+}: EthereumProviderProps) => {
+  const [provider, setProvider] = useState<ethers.Provider | null>(null);
+
+  useEffect(() => {
+    if (network === 'polkadot') {
+      setProvider(null);
+      return;
+    }
+    if (!provider) {
+      const networkData = NetworkList[network];
+      const defaultEndpointName = networkData.endpoints.defaultRpcEndpoint;
+      const jsonRpcEndpoint =
+        networkData.endpoints.jsonRpcEndpoints[defaultEndpointName];
+      const ethProvider = new ethers.JsonRpcProvider(
+        jsonRpcEndpoint,
+        networkData.networkish
+      );
+      setProvider(ethProvider);
+    }
+  }, [network]);
+
+  return (
+    <EthereumContext.Provider value={{ provider }}>
+      {children}
+    </EthereumContext.Provider>
+  );
+};

@@ -59,6 +59,13 @@ export interface Network {
     lightClient: string;
     defaultRpcEndpoint: string;
     rpcEndpoints: Record<string, string>;
+    jsonRpcEndpoints: Record<string, string>;
+  };
+  networkish?: {
+    chainId?: number;
+    ensAddress?: string;
+    ensNetwork?: number;
+    name?: string;
   };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   colors: Record<NetworkColor, { [key in Theme]: string }>;

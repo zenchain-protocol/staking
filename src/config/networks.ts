@@ -42,6 +42,9 @@ export const NetworkList: Networks = {
         RadiumBlock: 'wss://polkadot.public.curie.radiumblock.co/ws',
         Stakeworld: 'wss://dot-rpc.stakeworld.io',
       },
+      jsonRpcEndpoints: {
+        'IBP-GeoDNS1': 'https://rpc.ibp.network/polkadot',
+      },
     },
     colors: {
       primary: {
@@ -95,6 +98,15 @@ export const NetworkList: Networks = {
       rpcEndpoints: {
         localhost: 'ws://localhost:9944',
       },
+      jsonRpcEndpoints: {
+        localhost: 'http://localhost:9944',
+      },
+    },
+    networkish: {
+      name: 'zenchain-testnet',
+      chainId: 8408,
+      ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+      ensNetwork: 1,
     },
     colors: {
       primary: {

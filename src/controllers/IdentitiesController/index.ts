@@ -1,74 +1,22 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
-
-import type { AnyApi, AnyJson } from 'types';
-import type { ApiPromise } from '@polkadot/api';
+import type { ethers } from 'ethers';
 
 export class IdentitiesController {
-  static fetch = async (api: ApiPromise, addresses: string[]) => {
-    // Fetches identities for addresses.
-    const fetchBase = async () => {
-      const result = (await api.query.identity.identityOf.multi(addresses)).map(
-        (identity) => identity.toHuman()
-      );
+  // Fetches identities for addresses.
+  static fetch = async (provider: ethers.Provider, addresses: string[]) => {
+    const ensAddresses = await Promise.all(
+      addresses.map((address) => provider.resolveName(address))
+    );
 
-      // Take identity data (first index) of results.
-      const data = result.map(
-        (resultArray: AnyJson | null) => resultArray?.[0] || null
-      );
-
-      return Object.fromEntries(
-        data
-          .map((key: string, index: number) => [addresses[index], key])
-          .filter(([, value]: AnyJson) => value !== null)
-      );
-    };
-
-    // Fetch an array of super accounts and their identities.
-    const fetchSupers = async () => {
-      const supersRaw = (await api.query.identity.superOf.multi(addresses)).map(
-        (superOf) => superOf.toHuman()
-      );
-
-      const supers = Object.fromEntries(
-        supersRaw
-          .map((k, i) => [
-            addresses[i],
-            {
-              superOf: k,
-            },
-          ])
-          .filter(([, { superOf }]: AnyApi) => superOf !== null)
-      );
-
-      const superIdentities = (
-        await api.query.identity.identityOf.multi(
-          Object.values(supers).map(({ superOf }: AnyApi) => superOf[0])
-        )
-      ).map((superIdentity) => superIdentity.toHuman());
-
-      // Take identity data (first index) of results.
-      const data = superIdentities.map(
-        (resultArray: AnyJson | null) => resultArray?.[0] || null
-      );
-
-      const supersWithIdentity = Object.fromEntries(
-        Object.entries(supers).map(([k, v]: AnyApi, i) => [
-          k,
-          {
-            ...v,
-            identity: data[i],
-          },
-        ])
-      );
-      return supersWithIdentity;
-    };
-
-    const [identities, supers] = await Promise.all([
-      fetchBase(),
-      fetchSupers(),
-    ]);
-
-    return { identities, supers };
+    return ensAddresses.reduce(
+      (acc: Record<string, string>, ensAddress, index) => {
+        if (ensAddress) {
+          acc[addresses[index]] = ensAddress;
+        }
+        return acc;
+      },
+      {}
+    );
   };
 }
