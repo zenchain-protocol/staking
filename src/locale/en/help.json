@@ -3,9 +3,7 @@
     "definitions": {
       "activeNominators": [
         "Active Nominators",
-        [
-          "Nominators who are active in the current session."
-        ]
+        ["Nominators who are active in the current session."]
       ],
       "activePools": [
         "Active Pools",

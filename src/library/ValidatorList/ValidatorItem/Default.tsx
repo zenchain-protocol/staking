@@ -40,15 +40,12 @@ export const Default = ({
   const { openMenu, open } = useMenu();
   const { pluginEnabled } = usePlugins();
   const { openModal } = useOverlay().modal;
-  const { validatorIdentities, validatorSupers } = useValidators();
+  const { validatorIdentities } = useValidators();
 
   const { address, prefs, validatorStatus, totalStake } = validator;
   const commission = prefs?.commission ?? null;
 
-  const identity = getIdentityDisplay(
-    validatorIdentities[address],
-    validatorSupers[address]
-  );
+  const identity = getIdentityDisplay(validatorIdentities[address]);
 
   // Configure menu.
   const menuItems: AnyJson[] = [];

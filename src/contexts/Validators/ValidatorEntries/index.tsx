@@ -17,7 +17,6 @@ import type {
   Identity,
   Validator,
   ValidatorAddresses,
-  SuperIdentity,
   ValidatorListEntry,
   ValidatorsContextInterface,
   ValidatorEraPointHistory,
@@ -32,6 +31,7 @@ import {
 import { getLocalEraValidators, setLocalEraValidators } from '../Utils';
 import { useErasPerDay } from 'hooks/useErasPerDay';
 import { IdentitiesController } from 'controllers/IdentitiesController';
+import { useEthereum } from '../../Ethereum';
 
 export const ValidatorsContext = createContext<ValidatorsContextInterface>(
   defaultValidatorsContext
@@ -45,8 +45,9 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     isReady,
     api,
     consts: { historyDepth },
+    activeEra,
   } = useApi();
-  const { activeEra } = useApi();
+  const { ethereum } = useEthereum();
   const { stakers } = useStaking().eraStakers;
   const { erasPerDay, maxSupportedDays } = useErasPerDay();
 
@@ -59,11 +60,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   // Store validator identity data.
   const [validatorIdentities, setValidatorIdentities] = useState<
     Record<string, Identity>
-  >({});
-
-  // Store validator super identity data.
-  const [validatorSupers, setValidatorSupers] = useState<
-    Record<string, SuperIdentity>
   >({});
 
   // Stores the currently active validator set.
@@ -314,14 +310,11 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     // NOTE: validators are shuffled before committed to state.
     setValidators(shuffle(validatorEntries));
 
-    const addresses = validatorEntries.map(({ address }) => address);
-    const { identities, supers } = await IdentitiesController.fetch(
-      api,
-      addresses
-    );
-
-    setValidatorIdentities(identities);
-    setValidatorSupers(supers);
+    if (ethereum) {
+      const addresses = validatorEntries.map(({ address }) => address);
+      const identities = await IdentitiesController.fetch(ethereum, addresses);
+      setValidatorIdentities(identities);
+    }
     setValidatorsFetched('synced');
   };
 
@@ -504,7 +497,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAvgCommission(0);
     setValidators([]);
     setValidatorIdentities({});
-    setValidatorSupers({});
     setErasRewardPoints({});
     setEraPointsBoundaries(null);
     setValidatorEraPointsHistory({});
@@ -557,7 +549,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
         injectValidatorListData,
         validators,
         validatorIdentities,
-        validatorSupers,
         avgCommission,
         sessionValidators,
         sessionParaValidators,

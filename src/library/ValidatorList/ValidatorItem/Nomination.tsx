@@ -27,7 +27,7 @@ export const Nomination = ({
   nominationStatus,
 }: ValidatorItemProps) => {
   const { selectActive } = useList();
-  const { validatorIdentities, validatorSupers } = useValidators();
+  const { validatorIdentities } = useValidators();
 
   const { address, prefs } = validator;
   const commission = prefs?.commission ?? null;
@@ -45,10 +45,7 @@ export const Nomination = ({
               {displayFor !== 'canvas' && (
                 <Metrics
                   address={address}
-                  display={getIdentityDisplay(
-                    validatorIdentities[address],
-                    validatorSupers[address]
-                  )}
+                  display={getIdentityDisplay(validatorIdentities[address])}
                 />
               )}
             </Labels>

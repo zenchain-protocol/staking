@@ -11,18 +11,15 @@ import { getIdentityDisplay } from '../../ValidatorList/ValidatorItem/Utils';
 import type { IdentityProps } from '../types';
 
 export const Identity = ({ address }: IdentityProps) => {
-  const { validatorIdentities, validatorSupers, validatorsFetched } =
-    useValidators();
+  const { validatorIdentities, validatorsFetched } = useValidators();
 
   const [display, setDisplay] = useState<ReactNode>(
-    getIdentityDisplay(validatorIdentities[address], validatorSupers[address])
+    getIdentityDisplay(validatorIdentities[address])
   );
 
   useEffect(() => {
-    setDisplay(
-      getIdentityDisplay(validatorIdentities[address], validatorSupers[address])
-    );
-  }, [validatorSupers, validatorIdentities, address]);
+    setDisplay(getIdentityDisplay(validatorIdentities[address]));
+  }, [validatorIdentities, address]);
 
   return (
     <IdentityWrapper

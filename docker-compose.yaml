@@ -9,15 +9,15 @@ services:
     platform: linux/amd64
     container_name: zenchain
     ports:
-      - "9944:9944"
-      - "9615:9615"
+      - '9944:9944'
+      - '9615:9615'
     command:
-      - "./usr/bin/zenchain-node"
-      - "--node-key=0000000000000000000000000000000000000000000000000000000000000001"
-      - "--base-path=/tmp/alice"
-      - "--dev"
-      - "--port=30333"
-      - "--unsafe-rpc-external"
-      - "--rpc-cors=all"
+      - './usr/bin/zenchain-node'
+      - '--node-key=0000000000000000000000000000000000000000000000000000000000000001'
+      - '--base-path=/tmp/alice'
+      - '--dev'
+      - '--port=30333'
+      - '--unsafe-rpc-external'
+      - '--rpc-cors=all'
     networks:
       - internet

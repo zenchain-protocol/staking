@@ -1,63 +1,21 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { u8aToString, u8aUnwrapBytes } from '@polkadot/util';
 import type BigNumber from 'bignumber.js';
 import { MaxEraRewardPointsEras } from 'consts';
 import type { AnyJson } from 'types';
 
-export const getIdentityDisplay = (
-  _identity: AnyJson,
-  _superIdentity: AnyJson
-) => {
-  let displayFinal = '';
-  let foundSuper = false;
+export const getIdentityDisplay = (_identity: AnyJson) => {
+  const identityDisplay = _identity?.ens ?? null;
 
-  // check super identity exists, get display.Raw if it does
-  const superIdentity = _superIdentity?.identity ?? null;
-  const superRaw = _superIdentity?.superOf?.[1]?.Raw ?? null;
-
-  const superDisplay = superIdentity?.info?.display?.Raw ?? null;
-
-  // check if super raw has been encoded
-  const superRawAsBytes = u8aToString(u8aUnwrapBytes(superRaw));
-
-  // check if super identity has been byte encoded
-  const superIdentityAsBytes = u8aToString(u8aUnwrapBytes(superDisplay));
-
-  if (superIdentityAsBytes !== '') {
-    displayFinal = superIdentityAsBytes;
-    foundSuper = true;
-  } else if (superDisplay !== null) {
-    displayFinal = superDisplay;
-    foundSuper = true;
-  }
-
-  if (!foundSuper) {
-    // cehck sub identity exists, get display.Raw if it does
-    const identity = _identity?.info?.display?.Raw ?? null;
-
-    // check if identity has been byte encoded
-    const subIdentityAsBytes = u8aToString(u8aUnwrapBytes(identity));
-
-    if (subIdentityAsBytes !== '') {
-      displayFinal = subIdentityAsBytes;
-    } else if (identity !== null) {
-      displayFinal = identity;
-    }
-  }
-  if (displayFinal === '') {
+  if (!identityDisplay) {
     return null;
   }
 
   return (
     <>
-      {displayFinal}
-      {superRawAsBytes !== '' ? (
-        <span>/ {superRawAsBytes}</span>
-      ) : superRaw !== null ? (
-        <span>/ {superRaw}</span>
-      ) : null}
+      {identityDisplay}
+      <span>/ {_identity.address}</span>
     </>
   );
 };

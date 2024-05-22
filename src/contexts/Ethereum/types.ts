@@ -1,9 +1,3 @@
-// Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
-// SPDX-License-Identifier: GPL-3.0-only
-
-// Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
-// SPDX-License-Identifier: GPL-3.0-only
-
 import type { ethers } from 'ethers';
 import type { ReactNode } from 'react';
 import type { NetworkName } from '../../types';
@@ -14,5 +8,5 @@ export interface EthereumProviderProps {
 }
 
 export interface EthereumContextInterface {
-  provider: ethers.Provider | null;
+  ethereum: ethers.Provider | null;
 }
