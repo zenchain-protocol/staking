@@ -45,6 +45,7 @@ export const NetworkList: Networks = {
       jsonRpcEndpoints: {
         'IBP-GeoDNS1': 'https://rpc.ibp.network/polkadot',
       },
+      crossChainJsonRpcEndpoints: {},
     },
     colors: {
       primary: {
@@ -101,12 +102,14 @@ export const NetworkList: Networks = {
       jsonRpcEndpoints: {
         localhost: 'http://localhost:9944',
       },
+      crossChainJsonRpcEndpoints: {
+        mainnet:
+          'https://mainnet.infura.io/v3/617baa5f9ce341899f31633fae9f6ce5',
+      },
     },
     networkish: {
       name: 'zenchain-testnet',
       chainId: 8408,
-      ensAddress: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-      ensNetwork: 1,
     },
     colors: {
       primary: {

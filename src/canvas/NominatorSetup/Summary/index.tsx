@@ -32,7 +32,7 @@ export const Summary = ({ section }: SetupStepProps) => {
   const { getPayeeItems } = usePayeeConfig();
   const { closeCanvas } = useOverlay().canvas;
   const { accountHasSigner } = useImportedAccounts();
-  const { activeAccount, activeProxy } = useActiveAccounts();
+  const { activeAccount } = useActiveAccounts();
   const { getNominatorSetup, removeSetupProgress } = useSetup();
 
   const setup = getNominatorSetup(activeAccount);
@@ -64,7 +64,7 @@ export const Summary = ({ section }: SetupStepProps) => {
       api.tx.staking.bond(bondAsString, payeeToSubmit),
       api.tx.staking.nominate(targetsToSubmit),
     ];
-    return newBatchCall(txs, activeAccount);
+    return newBatchCall(txs);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -93,9 +93,9 @@ export const Summary = ({ section }: SetupStepProps) => {
         bondFor="nominator"
       />
       <MotionContainer thisSection={section} activeSection={setup.section}>
-        {!(
-          accountHasSigner(activeAccount) || accountHasSigner(activeProxy)
-        ) && <Warning text={t('nominate.readOnly')} />}
+        {!accountHasSigner(activeAccount) && (
+          <Warning text={t('nominate.readOnly')} />
+        )}
         <SummaryWrapper>
           <section>
             <div>

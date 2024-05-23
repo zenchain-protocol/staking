@@ -17,7 +17,6 @@ import { MenuProvider } from 'contexts/Menu';
 import { MigrateProvider } from 'contexts/Migrate';
 import { PromptProvider } from 'contexts/Prompt';
 import { PluginsProvider } from 'contexts/Plugins';
-import { ProxiesProvider } from 'contexts/Proxies';
 import { SetupProvider } from 'contexts/Setup';
 import { StakingProvider } from 'contexts/Staking';
 import { TooltipProvider } from 'contexts/Tooltip';
@@ -64,7 +63,6 @@ export const Providers = () => {
     ExternalAccountsProvider,
     OtherAccountsProvider,
     ImportedAccountsProvider,
-    ProxiesProvider,
     HelpProvider,
     PluginsProvider,
     BondedProvider,

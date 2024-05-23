@@ -23,7 +23,6 @@ export const SubmitTx = ({
   valid = false,
   noMargin = false,
   submitting = false,
-  proxySupported,
   displayFor = 'default',
   fromController = false,
 }: SubmitTxProps) => {
@@ -31,7 +30,7 @@ export const SubmitTx = ({
   const { getBondedAccount } = useBonded();
   const { unit } = useNetwork().networkData;
   const { setModalResize } = useOverlay().modal;
-  const { activeAccount, activeProxy } = useActiveAccounts();
+  const { activeAccount } = useActiveAccounts();
   const { notEnoughFunds, sender, setTxSignature } = useTxMeta();
   const { getAccount, requiresManualSign } = useImportedAccounts();
   const controller = getBondedAccount(activeAccount);
@@ -42,12 +41,7 @@ export const SubmitTx = ({
     who: getAccount(activeAccount),
   };
 
-  if (activeProxy && proxySupported) {
-    signingOpts = {
-      label: t('signedByProxy', { ns: 'library' }),
-      who: getAccount(activeProxy),
-    };
-  } else if (!(activeProxy && proxySupported) && fromController) {
+  if (fromController) {
     signingOpts = {
       label: t('signedByController', { ns: 'library' }),
       who: getAccount(controller),

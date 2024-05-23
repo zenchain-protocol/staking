@@ -6,12 +6,11 @@ import { Item } from './Item';
 import { ActiveAccounsWrapper } from './Wrappers';
 
 export const AccountControls = () => {
-  const { activeProxy, activeAccount } = useActiveAccounts();
+  const { activeAccount } = useActiveAccounts();
 
   return (
     <ActiveAccounsWrapper>
       <Item address={activeAccount} />
-      {activeProxy && <Item address={activeAccount} delegate={activeProxy} />}
     </ActiveAccounsWrapper>
   );
 };

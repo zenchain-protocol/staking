@@ -35,7 +35,6 @@ export const Payouts = () => {
   const { getData, injectBlockTimestamp } = useSubscanData([
     'payouts',
     'unclaimedPayouts',
-    'poolClaims',
   ]);
   const notStaking = !syncing && inSetup();
 
@@ -58,7 +57,6 @@ export const Payouts = () => {
     14,
     units,
     data.payouts,
-    data.poolClaims,
     data.unclaimedPayouts
   );
   let formatFrom = new Date();

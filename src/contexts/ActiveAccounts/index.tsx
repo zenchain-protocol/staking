@@ -6,7 +6,7 @@ import { createContext, useContext, useRef, useState } from 'react';
 import type { MaybeAddress } from 'types';
 import { setStateWithRef } from '@w3ux/utils';
 import { useNetwork } from 'contexts/Network';
-import type { ActiveAccountsContextInterface, ActiveProxy } from './types';
+import type { ActiveAccountsContextInterface } from './types';
 import { defaultActiveAccountsContext } from './defaults';
 
 export const ActiveAccountsContext =
@@ -24,25 +24,6 @@ export const ActiveAccountsProvider = ({
   // Store the currently active account.
   const [activeAccount, setActiveAccountState] = useState<MaybeAddress>(null);
   const activeAccountRef = useRef<string | null>(activeAccount);
-
-  // Store the active proxy account.
-  const [activeProxy, setActiveProxyState] = useState<ActiveProxy>(null);
-  const activeProxyRef = useRef(activeProxy);
-
-  // Setter for the active proxy account.
-  const setActiveProxy = (newActiveProxy: ActiveProxy, updateLocal = true) => {
-    if (updateLocal) {
-      if (newActiveProxy) {
-        localStorage.setItem(
-          `${network}_active_proxy`,
-          JSON.stringify(newActiveProxy)
-        );
-      } else {
-        localStorage.removeItem(`${network}_active_proxy`);
-      }
-    }
-    setStateWithRef(newActiveProxy, setActiveProxyState, activeProxyRef);
-  };
 
   // Setter for the active account.
   const setActiveAccount = (
@@ -67,12 +48,8 @@ export const ActiveAccountsProvider = ({
     <ActiveAccountsContext.Provider
       value={{
         activeAccount: activeAccountRef.current,
-        activeProxy: activeProxy?.address || null,
-        activeProxyType: activeProxy?.proxyType || null,
-        activeProxyRef: activeProxyRef.current || null,
         setActiveAccount,
         getActiveAccount,
-        setActiveProxy,
       }}
     >
       {children}

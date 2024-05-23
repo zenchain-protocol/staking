@@ -22,7 +22,7 @@ import { useNetwork } from 'contexts/Network';
 import type { PayoutLineProps } from './types';
 import {
   calculatePayoutAverages,
-  combineRewards,
+  mapRewardsWithoutEventId,
   formatRewardsForGraphs,
 } from './Utils';
 import { useSyncing } from 'hooks/useSyncing';
@@ -42,7 +42,7 @@ export const PayoutLine = ({
   average,
   height,
   background,
-  data: { payouts, poolClaims },
+  data: { payouts },
 }: PayoutLineProps) => {
   const { t } = useTranslation('library');
   const { mode } = useTheme();
@@ -58,21 +58,19 @@ export const PayoutLine = ({
   // define the most recent date that we will show on the graph.
   const fromDate = new Date();
 
-  const { allPayouts, allPoolClaims } = formatRewardsForGraphs(
+  const { allPayouts } = formatRewardsForGraphs(
     fromDate,
     days,
     units,
     payoutsNoSlash,
-    poolClaims,
     [] // Note: we are not using `unclaimedPayouts` here.
   );
 
   const { p: graphPayouts, a: graphPrePayouts } = allPayouts;
-  const { p: graphPoolClaims, a: graphPrePoolClaims } = allPoolClaims;
 
   // combine payouts and pool claims into one dataset and calculate averages.
-  const combined = combineRewards(graphPayouts, graphPoolClaims);
-  const preCombined = combineRewards(graphPrePayouts, graphPrePoolClaims);
+  const combined = mapRewardsWithoutEventId(graphPayouts);
+  const preCombined = mapRewardsWithoutEventId(graphPrePayouts);
 
   const combinedPayouts = calculatePayoutAverages(
     preCombined.concat(combined),

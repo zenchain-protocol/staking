@@ -73,8 +73,6 @@ export class BalancesController {
           [api.query.system.account, address],
           [api.query.balances.locks, address],
           [api.query.staking.payee, address],
-          [api.query.nominationPools.poolMembers, address],
-          [api.query.nominationPools.claimPermissions, address],
           [api.query.staking.nominators, address],
         ],
         async ([

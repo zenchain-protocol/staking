@@ -115,11 +115,7 @@ export const Unbond = () => {
     activeBn.isLessThan(minNominatorBondBn);
 
   // accumulate warnings.
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, true);
 
   if (nominatorActiveBelowMin) {
     warnings.push(

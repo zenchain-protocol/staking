@@ -40,7 +40,7 @@ ChartJS.register(
 export const PayoutBar = ({
   days,
   height,
-  data: { payouts, poolClaims, unclaimedPayouts },
+  data: { payouts, unclaimedPayouts },
 }: PayoutBarProps) => {
   const { i18n, t } = useTranslation('library');
   const { mode } = useTheme();
@@ -58,29 +58,21 @@ export const PayoutBar = ({
     unclaimedPayouts?.filter((p) => p.event_id !== 'Slashed') || [];
 
   // get formatted rewards data for graph.
-  const { allPayouts, allPoolClaims, allUnclaimedPayouts } =
-    formatRewardsForGraphs(
-      new Date(),
-      days,
-      units,
-      payoutsNoSlash,
-      poolClaims,
-      unclaimedPayoutsNoSlash
-    );
+  const { allPayouts, allUnclaimedPayouts } = formatRewardsForGraphs(
+    new Date(),
+    days,
+    units,
+    payoutsNoSlash,
+    unclaimedPayoutsNoSlash
+  );
 
   const { p: graphPayouts } = allPayouts;
   const { p: graphUnclaimedPayouts } = allUnclaimedPayouts;
-  const { p: graphPoolClaims } = allPoolClaims;
 
   // determine color for payouts
   const colorPayouts = notStaking
     ? colors.transparent[mode]
     : colors.primary[mode];
-
-  // determine color for poolClaims
-  const colorPoolClaims = notStaking
-    ? colors.transparent[mode]
-    : colors.secondary[mode];
 
   const data = {
     labels: graphPayouts.map((item: AnySubscan) => {
@@ -102,15 +94,6 @@ export const PayoutBar = ({
       },
       {
         order: 2,
-        label: t('poolClaim'),
-        data: graphPoolClaims.map((item: AnySubscan) => item.amount),
-        borderColor: colorPoolClaims,
-        backgroundColor: colorPoolClaims,
-        pointRadius: 0,
-        borderRadius: 3,
-      },
-      {
-        order: 3,
         data: graphUnclaimedPayouts.map((item: AnySubscan) => item.amount),
         label: t('unclaimedPayouts'),
         borderColor: colorPayouts,

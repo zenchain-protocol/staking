@@ -8,7 +8,6 @@ import { createContext, useContext, useRef, useState } from 'react';
 import { useBonded } from 'contexts/Bonded';
 import { useStaking } from 'contexts/Staking';
 import type { AnyJson, MaybeAddress } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import * as defaults from './defaults';
 import type { TxMetaContextInterface } from './types';
@@ -27,7 +26,6 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
     consts: { existentialDeposit },
   } = useApi();
   const { getBondedAccount } = useBonded();
-  const { activeProxy } = useActiveAccounts();
   const { getControllerNotImported } = useStaking();
   const { accountHasSigner } = useImportedAccounts();
 
@@ -97,17 +95,9 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
     setStateWithRef(s, setTxSignatureState, txSignatureRef);
   };
 
-  const txFeesValid = (() => {
-    if (txFees.isZero() || notEnoughFunds) {
-      return false;
-    }
-    return true;
-  })();
+  const txFeesValid = (() => !(txFees.isZero() || notEnoughFunds))();
 
-  const controllerSignerAvailable = (
-    stash: MaybeAddress,
-    proxySupported: boolean
-  ) => {
+  const controllerSignerAvailable = (stash: MaybeAddress) => {
     const controller = getBondedAccount(stash);
 
     if (controller !== stash) {
@@ -118,10 +108,7 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
       if (!accountHasSigner(controller)) {
         return 'read_only';
       }
-    } else if (
-      (!proxySupported || !accountHasSigner(activeProxy)) &&
-      !accountHasSigner(stash)
-    ) {
+    } else if (!accountHasSigner(stash)) {
       return 'read_only';
     }
     return 'ok';

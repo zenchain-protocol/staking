@@ -70,11 +70,7 @@ export const StopNominations = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    isStaking,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, isStaking);
 
   if (!nominations.length) {
     warnings.push(`${t('noNominationsSet')}`);

@@ -56,11 +56,7 @@ export const ClaimReward = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    false,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, false);
 
   useEffect(() => setModalResize(), [notEnoughFunds, warnings.length]);
 

@@ -20,20 +20,12 @@ import BigNumber from 'bignumber.js';
 export const AccountButton = ({
   label,
   address,
-  delegator,
-  proxyType,
   noBorder = false,
   transferrableBalance,
 }: AccountItemProps) => {
   const { t } = useTranslation('modals');
   const { getAccount } = useImportedAccounts();
-  const {
-    activeProxy,
-    activeAccount,
-    setActiveAccount,
-    setActiveProxy,
-    activeProxyType,
-  } = useActiveAccounts();
+  const { activeAccount, setActiveAccount } = useActiveAccounts();
   const { setModalStatus } = useOverlay().modal;
   const { units, unit } = useNetwork().networkData;
 
@@ -41,8 +33,7 @@ export const AccountButton = ({
   const meta = getAccount(address || '');
 
   const imported = !!meta;
-  const connectTo = delegator || address || '';
-  const connectProxy = delegator ? address || null : '';
+  const connectTo = address || '';
 
   // Determine account source icon.
   const Icon =
@@ -52,22 +43,15 @@ export const AccountButton = ({
         ? PolkadotVaultSVG
         : ExtensionIcons[meta?.source || ''] || undefined;
 
-  // Determine if this account is active (active account or proxy).
-  const isActive =
-    (connectTo === activeAccount &&
-      address === activeAccount &&
-      !activeProxy) ||
-    (connectProxy === activeProxy &&
-      proxyType === activeProxyType &&
-      activeProxy);
+  // Determine if this account is active.
+  const isActive = connectTo === activeAccount && address === activeAccount;
 
-  // Handle account click. Handles both active account and active proxy.
+  // Handle account click.
   const handleClick = () => {
     if (!imported) {
       return;
     }
     setActiveAccount(getAccount(connectTo)?.address || null);
-    setActiveProxy(proxyType ? { address: connectProxy, proxyType } : null);
     setModalStatus('closing');
   };
 
@@ -80,20 +64,10 @@ export const AccountButton = ({
             onClick={() => handleClick()}
             disabled={!imported}
           >
-            {delegator && (
-              <div className="delegator">
-                <Polkicon address={delegator} size={23} />
-              </div>
-            )}
             <div className="identicon">
               <Polkicon address={address ?? ''} size={23} />
             </div>
             <span className="name">
-              {delegator && (
-                <span>
-                  {proxyType} {t('proxy')}
-                </span>
-              )}
               {meta?.name ?? ellipsisFn(address ?? '')}
             </span>
             {meta?.source === 'external' && (

@@ -9,10 +9,8 @@ import { useApi } from 'contexts/Api';
 import { useLedgerHardware } from 'contexts/LedgerHardware';
 import { useTxMeta } from 'contexts/TxMeta';
 import type { AnyApi, AnyJson } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useBuildPayload } from '../useBuildPayload';
-import { useProxySupported } from '../useProxySupported';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { useExtensions } from '@w3ux/react-connect-kit';
@@ -27,9 +25,7 @@ export const useSubmitExtrinsic = ({
   const { t } = useTranslation('library');
   const { api } = useApi();
   const { buildPayload } = useBuildPayload();
-  const { activeProxy } = useActiveAccounts();
   const { extensionsStatus } = useExtensions();
-  const { isProxySupported } = useProxySupported();
   const { handleResetLedgerTask } = useLedgerHardware();
   const { addPendingNonce, removePendingNonce } = useTxMeta();
   const { getAccount, requiresManualSign } = useImportedAccounts();
@@ -58,48 +54,6 @@ export const useSubmitExtrinsic = ({
 
   // Track for one-shot transaction reset after submission.
   const didTxReset = useRef<boolean>(false);
-
-  // If proxy account is active, wrap tx in a proxy call and set the sender to the proxy account.
-  const wrapTxIfActiveProxy = () => {
-    // if already wrapped, update fromRef and return.
-    if (
-      txRef.current?.method.toHuman().section === 'proxy' &&
-      txRef.current?.method.toHuman().method === 'proxy'
-    ) {
-      if (activeProxy) {
-        fromRef.current = activeProxy;
-      }
-      return;
-    }
-
-    if (
-      api &&
-      activeProxy &&
-      txRef.current &&
-      isProxySupported(txRef.current, fromRef.current)
-    ) {
-      // update submit address to active proxy account.
-      fromRef.current = activeProxy;
-
-      // Do not wrap batch transactions. Proxy calls should already be wrapping each tx within the
-      // batch via `useBatchCall`.
-      if (
-        txRef.current?.method.toHuman().section === 'utility' &&
-        txRef.current?.method.toHuman().method === 'batch'
-      ) {
-        return;
-      }
-
-      // Not a batch transaction: wrap tx in proxy call.
-      txRef.current = api.tx.proxy.proxy(
-        {
-          id: from,
-        },
-        null,
-        txRef.current
-      );
-    }
-  };
 
   // Calculate the estimated tx fee of the transaction.
   const calculateEstimatedFee = async () => {
@@ -294,8 +248,6 @@ export const useSubmitExtrinsic = ({
     txRef.current = tx;
     // update submit address to latest from.
     fromRef.current = from || '';
-    // wrap tx in proxy call if active proxy & proxy supported.
-    wrapTxIfActiveProxy();
     // ensure sender is up to date.
     setSender(fromRef.current);
     // re-calculate estimated tx fee.
@@ -309,6 +261,5 @@ export const useSubmitExtrinsic = ({
     onSubmit,
     submitting,
     submitAddress: fromRef.current,
-    proxySupported: isProxySupported(txRef.current, fromRef.current),
   };
 };

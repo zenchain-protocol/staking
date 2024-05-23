@@ -120,11 +120,7 @@ export const UpdatePayee = () => {
 
   useEffect(() => setModalResize(), [notEnoughFunds]);
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, true);
 
   return (
     <>

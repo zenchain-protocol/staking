@@ -93,9 +93,7 @@ export const Forms = forwardRef(
         return tx;
       }
 
-      return calls.length === 1
-        ? calls.pop()
-        : newBatchCall(calls, activeAccount);
+      return calls.length === 1 ? calls.pop() : newBatchCall(calls);
     };
 
     const submitExtrinsic = useSubmitExtrinsic({
@@ -126,11 +124,7 @@ export const Forms = forwardRef(
       },
     });
 
-    const warnings = getSignerWarnings(
-      activeAccount,
-      false,
-      submitExtrinsic.proxySupported
-    );
+    const warnings = getSignerWarnings(activeAccount, false);
 
     return (
       <ContentWrapper>

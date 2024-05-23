@@ -118,11 +118,7 @@ export const Bond = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    false,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, false);
 
   // update bond value on task change.
   useEffect(() => {

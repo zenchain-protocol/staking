@@ -60,6 +60,7 @@ export interface Network {
     defaultRpcEndpoint: string;
     rpcEndpoints: Record<string, string>;
     jsonRpcEndpoints: Record<string, string>;
+    crossChainJsonRpcEndpoints: Record<string, string>;
   };
   networkish?: {
     chainId?: number;

@@ -45,9 +45,7 @@ export const BalanceTest = () => {
         unitToPlanck('0.05', units).toString()
       ),
     ];
-    const batch = newBatchCall(txs, activeAccount);
-
-    return batch;
+    return newBatchCall(txs);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

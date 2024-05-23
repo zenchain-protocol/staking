@@ -4,11 +4,9 @@
 import { faChevronLeft, faLinkSlash } from '@fortawesome/free-solid-svg-icons';
 import { Fragment, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProxies } from 'contexts/Proxies';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { AccountButton } from './Account';
-import { Delegates } from './Delegates';
 import { AccountSeparator, AccountWrapper } from './Wrappers';
 import type { AccountNominating, AccountNotStaking } from './types';
 import { useActiveBalances } from 'hooks/useActiveBalances';
@@ -28,7 +26,6 @@ export const Accounts = () => {
   const {
     consts: { existentialDeposit },
   } = useApi();
-  const { getDelegates } = useProxies();
   const {
     replaceModal,
     status: modalStatus,
@@ -36,8 +33,7 @@ export const Accounts = () => {
   } = useOverlay().modal;
   const { accounts } = useImportedAccounts();
   const { getFeeReserve } = useTransferOptions();
-  const { activeAccount, setActiveAccount, setActiveProxy } =
-    useActiveAccounts();
+  const { activeAccount, setActiveAccount } = useActiveAccounts();
 
   // Listen to balance updates for entire accounts list.
   const { getLocks, getBalance, getEdReserved } = useActiveBalances({
@@ -77,15 +73,6 @@ export const Accounts = () => {
   for (const { address } of accounts) {
     let isNominating = false;
     const isStash = stashes[stashes.indexOf(address)] ?? null;
-    const delegates = getDelegates(address);
-
-    // Inject transferrable balance into delegates list.
-    if (delegates?.delegates) {
-      delegates.delegates = delegates?.delegates.map((d) => ({
-        ...d,
-        transferrableBalance: getTransferrableBalance(d.delegate),
-      }));
-    }
 
     // Check if nominating.
     if (
@@ -97,13 +84,13 @@ export const Accounts = () => {
 
     // If not doing anything, add address to `notStaking`.
     if (!isStash && !notStaking.find((n) => n.address === address)) {
-      notStaking.push({ address, delegates });
+      notStaking.push({ address });
       continue;
     }
 
     // Nominating only.
     if (isNominating) {
-      nominating.push({ address, stashImported: true, delegates });
+      nominating.push({ address, stashImported: true });
     }
   }
 
@@ -144,7 +131,6 @@ export const Accounts = () => {
               iconRight={faLinkSlash}
               onClick={() => {
                 setActiveAccount(null);
-                setActiveProxy(null);
               }}
             />
           )}
@@ -167,15 +153,12 @@ export const Accounts = () => {
         <>
           <AccountSeparator />
           <ActionItem text={t('nominating')} />
-          {nominating.map(({ address, delegates }, i) => (
+          {nominating.map(({ address }, i) => (
             <Fragment key={`acc_nominating_${i}`}>
               <AccountButton
                 transferrableBalance={getTransferrableBalance(address)}
                 address={address}
               />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
             </Fragment>
           ))}
         </>
@@ -185,15 +168,12 @@ export const Accounts = () => {
         <>
           <AccountSeparator />
           <ActionItem text={t('notStaking')} />
-          {notStaking.map(({ address, delegates }, i) => (
+          {notStaking.map(({ address }, i) => (
             <Fragment key={`acc_not_staking_${i}`}>
               <AccountButton
                 transferrableBalance={getTransferrableBalance(address)}
                 address={address}
               />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
             </Fragment>
           ))}
         </>

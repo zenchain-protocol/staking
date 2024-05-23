@@ -1,7 +1,6 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { useTranslation } from 'react-i18next';
 import { useStaking } from 'contexts/Staking';
 import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
@@ -10,11 +9,10 @@ import { HeadingWrapper } from './Wrappers';
 import { useSyncing } from 'hooks/useSyncing';
 
 export const Connected = () => {
-  const { t } = useTranslation('library');
   const { isNominating } = useStaking();
   const { syncing } = useSyncing(['initialization']);
   const { accountHasSigner } = useImportedAccounts();
-  const { activeAccount, activeProxy } = useActiveAccounts();
+  const { activeAccount } = useActiveAccounts();
 
   return (
     activeAccount && (
@@ -29,17 +27,6 @@ export const Connected = () => {
             readOnly={!accountHasSigner(activeAccount)}
           />
         </HeadingWrapper>
-
-        {/* Proxy account display / hide if no proxy. */}
-        {activeProxy && (
-          <HeadingWrapper>
-            <DefaultAccount
-              value={activeProxy}
-              label={t('proxy')}
-              readOnly={!accountHasSigner(activeProxy)}
-            />
-          </HeadingWrapper>
-        )}
       </>
     )
   );

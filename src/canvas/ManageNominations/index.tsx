@@ -19,7 +19,7 @@ import type {
   NominationSelectionWithResetCounter,
 } from 'library/GenerateNominations/types';
 import { RevertPrompt } from './Prompts/RevertPrompt';
-import { CanvasSubmitTxFooter, CanvasFullScreenWrapper } from '../Wrappers';
+import { CanvasFullScreenWrapper, CanvasSubmitTxFooter } from '../Wrappers';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
@@ -39,10 +39,7 @@ export const ManageNominations = () => {
   const { openPromptWith, closePrompt } = usePrompt();
 
   const { maxNominations } = consts;
-  const controller = getBondedAccount(activeAccount);
-  const bondFor = options?.bondFor || 'nominator';
-  const isPool = bondFor === 'pool';
-  const signingAccount = isPool ? activeAccount : controller;
+  const signingAccount = getBondedAccount(activeAccount);
 
   // Valid to submit transaction.
   const [valid, setValid] = useState<boolean>(false);
@@ -94,13 +91,9 @@ export const ManageNominations = () => {
     }
 
     // Note: `targets` structure differs between staking and pools.
-    const targetsToSubmit = newNominations.nominations.map((nominee) =>
-      isPool
-        ? nominee.address
-        : {
-            Id: nominee.address,
-          }
-    );
+    const targetsToSubmit = newNominations.nominations.map((nominee) => ({
+      Id: nominee.address,
+    }));
 
     return api.tx.staking.nominate(targetsToSubmit);
   };
@@ -180,7 +173,7 @@ export const ManageNominations = () => {
       <CanvasSubmitTxFooter>
         <SubmitTx
           noMargin
-          fromController={!isPool}
+          fromController={true}
           valid={valid}
           displayFor="canvas"
           {...submitExtrinsic}

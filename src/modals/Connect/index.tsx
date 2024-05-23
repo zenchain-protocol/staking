@@ -9,7 +9,6 @@ import { SelectItems } from 'library/SelectItems';
 import type { AnyFunction } from 'types';
 import { Extension } from './Extension';
 import { Ledger } from './Ledger';
-import { Proxies } from './Proxies';
 import { ReadOnly } from './ReadOnly';
 import { Vault } from './Vault';
 import { ExtensionsWrapper } from './Wrappers';
@@ -72,9 +71,6 @@ export const Connect = () => {
   // toggle read only management
   const [readOnlyOpen, setReadOnlyOpen] = useState<boolean>(false);
 
-  // toggle proxy delegate management
-  const [newProxyOpen, setNewProxyOpen] = useState<boolean>(false);
-
   // active modal section
   const [section, setSection] = useState<number>(0);
 
@@ -98,7 +94,7 @@ export const Connect = () => {
   // Resize modal on state change.
   useEffectIgnoreInitial(() => {
     refreshModalHeight();
-  }, [section, readOnlyOpen, newProxyOpen, extensionsStatus]);
+  }, [section, readOnlyOpen, extensionsStatus]);
 
   useEffect(() => {
     window.addEventListener('resize', refreshModalHeight);
@@ -233,11 +229,6 @@ export const Connect = () => {
         <div className="section">
           <ModalPadding horizontalOnly ref={readOnlyRef}>
             <ReadOnly setInputOpen={setReadOnlyOpen} inputOpen={readOnlyOpen} />
-          </ModalPadding>
-        </div>
-        <div className="section">
-          <ModalPadding horizontalOnly ref={proxiesRef}>
-            <Proxies setInputOpen={setNewProxyOpen} inputOpen={newProxyOpen} />
           </ModalPadding>
         </div>
       </ModalMotionThreeSection>

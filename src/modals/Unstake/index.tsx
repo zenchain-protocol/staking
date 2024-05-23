@@ -95,7 +95,7 @@ export const Unstake = () => {
       return api.tx.staking.chill();
     }
     const txs = [api.tx.staking.chill(), api.tx.staking.unbond(bondAsString)];
-    return newBatchCall(txs, controller);
+    return newBatchCall(txs);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -107,11 +107,7 @@ export const Unstake = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount, true);
 
   return (
     <>

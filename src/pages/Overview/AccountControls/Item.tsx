@@ -2,26 +2,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ellipsisFn, remToUnit } from '@w3ux/utils';
 import { useTranslation } from 'react-i18next';
 import type { NotificationText } from 'controllers/NotificationsController/types';
-import { useProxies } from 'contexts/Proxies';
 import { Polkicon } from '@w3ux/react-polkicon';
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { ItemWrapper } from './Wrappers';
 import type { ActiveAccountProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 
-export const Item = ({ address, delegate = null }: ActiveAccountProps) => {
+export const Item = ({ address }: ActiveAccountProps) => {
   const { t } = useTranslation('pages');
-  const { getProxyDelegate } = useProxies();
   const { getAccount } = useImportedAccounts();
 
-  const primaryAddress = delegate || address || '';
-  const delegatorAddress = delegate ? address : null;
-
+  const primaryAddress = address || '';
   const accountData = getAccount(primaryAddress);
 
   // click to copy notification
@@ -33,31 +28,15 @@ export const Item = ({ address, delegate = null }: ActiveAccountProps) => {
     };
   }
 
-  const proxyDelegate = getProxyDelegate(delegatorAddress, primaryAddress);
-
   return (
     <ItemWrapper>
       <div className="title">
         <h4>
           {accountData && (
             <>
-              {delegatorAddress && (
-                <div className="delegator">
-                  <Polkicon
-                    address={delegatorAddress || ''}
-                    size={remToUnit('1.7rem')}
-                  />
-                </div>
-              )}
               <div className="icon">
                 <Polkicon address={primaryAddress} size={remToUnit('1.7rem')} />
               </div>
-              {delegatorAddress && (
-                <span>
-                  {proxyDelegate?.proxyType} {t('overview.proxy')}
-                  <FontAwesomeIcon icon={faArrowLeft} transform="shrink-2" />
-                </span>
-              )}
               {ellipsisFn(primaryAddress)}
               <button
                 type="button"

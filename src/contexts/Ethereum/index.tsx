@@ -22,13 +22,8 @@ export const EthereumProvider = ({
       return;
     }
     if (!ethereum) {
-      const networkData = NetworkList[network];
-      const defaultEndpointName = networkData.endpoints.defaultRpcEndpoint;
-      const jsonRpcEndpoint =
-        networkData.endpoints.jsonRpcEndpoints[defaultEndpointName];
       const ethProvider = new ethers.JsonRpcProvider(
-        jsonRpcEndpoint,
-        networkData.networkish
+        NetworkList[network].endpoints.crossChainJsonRpcEndpoints.mainnet
       );
       setEthereum(ethProvider);
     }
