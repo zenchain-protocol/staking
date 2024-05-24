@@ -5,9 +5,9 @@
 import { NetworkList } from 'config/networks';
 
 export const defaultNetworkContext = {
-  network: NetworkList.polkadot.name,
-  networkData: NetworkList.polkadot,
+  network: NetworkList.zenchain_testnet.name,
+  networkData: NetworkList.zenchain_testnet,
   switchNetwork: () => {},
 };
 
-export const defaultNetwork = 'polkadot';
+export const defaultNetwork = 'zenchain_testnet';

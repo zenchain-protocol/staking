@@ -6,7 +6,7 @@ import { stringToU8a } from '@polkadot/util';
 /*
  * Global Constants
  */
-export const DappName = 'Polkadot Staking Dashboard';
+export const DappName = 'Zenchain Staking Dashboard';
 export const PolkadotUrl = 'https://polkadot.network/features/staking/';
 export const ManualSigners = ['ledger', 'vault'];
 

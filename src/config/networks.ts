@@ -91,7 +91,7 @@ export const NetworkList: Networks = {
     defaultFeeReserve: 0.1,
     maxExposurePageSize: new BigNumber(512),
   },
-  zenchain: {
+  zenchain_testnet: {
     name: 'zenchain_testnet',
     endpoints: {
       lightClient: 'zenchain_testnet',
