@@ -31,7 +31,6 @@ import {
 import { getLocalEraValidators, setLocalEraValidators } from '../Utils';
 import { useErasPerDay } from 'hooks/useErasPerDay';
 import { IdentitiesController } from 'controllers/IdentitiesController';
-import { useEthereum } from '../../Ethereum';
 
 export const ValidatorsContext = createContext<ValidatorsContextInterface>(
   defaultValidatorsContext
@@ -47,7 +46,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     consts: { historyDepth },
     activeEra,
   } = useApi();
-  const { ethereum } = useEthereum();
   const { stakers } = useStaking().eraStakers;
   const { erasPerDay, maxSupportedDays } = useErasPerDay();
 
@@ -310,11 +308,11 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     // NOTE: validators are shuffled before committed to state.
     setValidators(shuffle(validatorEntries));
 
-    if (ethereum) {
-      const addresses = validatorEntries.map(({ address }) => address);
-      const identities = await IdentitiesController.fetch(ethereum, addresses);
-      setValidatorIdentities(identities);
-    }
+    const addresses = validatorEntries.map(({ address }) => address);
+    const identities = await IdentitiesController.fetch(
+      addresses as `0x${string}`[]
+    );
+    setValidatorIdentities(identities);
     setValidatorsFetched('synced');
   };
 

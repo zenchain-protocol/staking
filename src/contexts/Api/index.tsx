@@ -67,7 +67,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
   const initialRpcEndpoint = () => {
     const local = localStorage.getItem(`${network}_rpc_endpoint`);
     if (local) {
-      if (NetworkList[network].endpoints.rpcEndpoints[local]) {
+      if (NetworkList[network].endpoints.wsRpcEndpoints[local]) {
         return local;
       } else {
         localStorage.removeItem(`${network}_rpc_endpoint`);
@@ -83,7 +83,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
 
   // Set RPC provider with local storage and validity checks.
   const setRpcEndpoint = (key: string) => {
-    if (!NetworkList[network].endpoints.rpcEndpoints[key]) {
+    if (!NetworkList[network].endpoints.wsRpcEndpoints[key]) {
       return;
     }
     localStorage.setItem(`${network}_rpc_endpoint`, key);

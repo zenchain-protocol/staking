@@ -26,13 +26,18 @@ export const PagedRewardsStartEra: Record<NetworkName, BigNumber | null> = {
   zenchain_testnet: new BigNumber(1),
 };
 
+export const crossChainJsonRpcEndpoints: Record<string, string> = {
+  mainnet: 'https://mainnet.infura.io/v3/617baa5f9ce341899f31633fae9f6ce5',
+};
+
 export const NetworkList: Networks = {
   polkadot: {
     name: 'polkadot',
+    chainId: 0,
     endpoints: {
       lightClient: 'polkadot',
       defaultRpcEndpoint: 'IBP-GeoDNS1',
-      rpcEndpoints: {
+      wsRpcEndpoints: {
         'Automata 1RPC': 'wss://1rpc.io/dot',
         Dwellir: 'wss://polkadot-rpc.dwellir.com',
         'Dwellir Tunisia': 'wss://polkadot-rpc-tn.dwellir.com',
@@ -45,7 +50,6 @@ export const NetworkList: Networks = {
       jsonRpcEndpoints: {
         'IBP-GeoDNS1': 'https://rpc.ibp.network/polkadot',
       },
-      crossChainJsonRpcEndpoints: {},
     },
     colors: {
       primary: {
@@ -93,23 +97,16 @@ export const NetworkList: Networks = {
   },
   zenchain_testnet: {
     name: 'zenchain_testnet',
+    chainId: 8408,
     endpoints: {
       lightClient: 'zenchain_testnet',
       defaultRpcEndpoint: 'localhost',
-      rpcEndpoints: {
+      wsRpcEndpoints: {
         localhost: 'ws://localhost:9944',
       },
       jsonRpcEndpoints: {
         localhost: 'http://localhost:9944',
       },
-      crossChainJsonRpcEndpoints: {
-        mainnet:
-          'https://mainnet.infura.io/v3/617baa5f9ce341899f31633fae9f6ce5',
-      },
-    },
-    networkish: {
-      name: 'zenchain-testnet',
-      chainId: 8408,
     },
     colors: {
       primary: {

@@ -55,18 +55,12 @@ type NetworkColor =
   | 'pending';
 export interface Network {
   name: NetworkName;
+  chainId: number;
   endpoints: {
     lightClient: string;
     defaultRpcEndpoint: string;
-    rpcEndpoints: Record<string, string>;
+    wsRpcEndpoints: Record<string, string>;
     jsonRpcEndpoints: Record<string, string>;
-    crossChainJsonRpcEndpoints: Record<string, string>;
-  };
-  networkish?: {
-    chainId?: number;
-    ensAddress?: string;
-    ensNetwork?: number;
-    name?: string;
   };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   colors: Record<NetworkColor, { [key in Theme]: string }>;

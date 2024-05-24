@@ -1,37 +1,18 @@
-import { useContext, createContext, useState, useEffect } from 'react';
-import type { EthereumContextInterface, EthereumProviderProps } from './types';
-import { defaultEthereumContext } from './defaults';
-import { ethers } from 'ethers';
-import { NetworkList } from '../../config/networks';
+import '@rainbow-me/rainbowkit/styles.css';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from 'wagmi';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import { wagmiConfig } from '../../config/wagmi';
 
-export const EthereumContext = createContext<EthereumContextInterface>(
-  defaultEthereumContext
-);
-
-export const useEthereum = () => useContext(EthereumContext);
-
-export const EthereumProvider = ({
-  children,
-  network,
-}: EthereumProviderProps) => {
-  const [ethereum, setEthereum] = useState<ethers.Provider | null>(null);
-
-  useEffect(() => {
-    if (network === 'polkadot') {
-      setEthereum(null);
-      return;
-    }
-    if (!ethereum) {
-      const ethProvider = new ethers.JsonRpcProvider(
-        NetworkList[network].endpoints.crossChainJsonRpcEndpoints.mainnet
-      );
-      setEthereum(ethProvider);
-    }
-  }, [network]);
+export const EthereumProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = new QueryClient();
 
   return (
-    <EthereumContext.Provider value={{ ethereum }}>
-      {children}
-    </EthereumContext.Provider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };

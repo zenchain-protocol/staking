@@ -142,7 +142,7 @@ export class Api {
   // Initiate Websocket Provider.
   initWsProvider() {
     this.#provider = new WsProvider(
-      NetworkList[this.network].endpoints.rpcEndpoints[this.#rpcEndpoint]
+      NetworkList[this.network].endpoints.wsRpcEndpoints[this.#rpcEndpoint]
     );
   }
 

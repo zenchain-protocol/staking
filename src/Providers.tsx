@@ -48,7 +48,7 @@ export const Providers = () => {
   const providers: Provider[] = [
     UIProvider,
     [APIProvider, { network }],
-    [EthereumProvider, { network }],
+    EthereumProvider,
     LedgerHardwareProvider,
     [
       ExtensionsProvider,

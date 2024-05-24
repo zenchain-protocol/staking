@@ -32,7 +32,9 @@
     "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
     "@polkawatch/ddp-client": "^2.0.11",
+    "@rainbow-me/rainbowkit": "^2.1.1",
     "@substrate/connect": "0.8.10",
+    "@tanstack/react-query": "^5.37.1",
     "@w3ux/extension-assets": "^0.2.6",
     "@w3ux/hooks": "^0.0.3",
     "@w3ux/react-connect-kit": "0.2.0",
@@ -47,7 +49,6 @@
     "chart.js": "^4.4.2",
     "chroma-js": "^2.4.2",
     "date-fns": "^3.3.1",
-    "ethers": "^6.12.1",
     "framer-motion": "^11.0.24",
     "html5-qrcode": "^2.3.8",
     "i18next": "^23.10.0",
@@ -65,7 +66,9 @@
     "react-router-dom": "^6.22.3",
     "react-scroll": "^1.9.0",
     "styled-components": "^6.1.8",
-    "usehooks-ts": "^3.0.2"
+    "usehooks-ts": "^3.0.2",
+    "viem": "2.12.1",
+    "wagmi": "^2.9.6"
   },
   "devDependencies": {
     "@ledgerhq/logs": "^6.12.0",
