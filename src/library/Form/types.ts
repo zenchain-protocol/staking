@@ -2,37 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type BigNumber from 'bignumber.js';
-import type { Balance } from 'contexts/Balances/types';
-import type {
-  ExtensionAccount,
-  ExternalAccount,
-} from '@w3ux/react-connect-kit/types';
-import type { BondFor, MaybeAddress } from 'types';
+import type { BondFor } from 'types';
 import type { ClaimPermission } from 'contexts/Pools/types';
-
-export interface ExtensionAccountItem extends ExtensionAccount {
-  active?: boolean;
-  alert?: string;
-  balance?: Balance;
-}
-export interface ExternalAccountItem extends ExternalAccount {
-  active?: boolean;
-  alert?: string;
-  balance?: Balance;
-}
-export type ImportedAccountItem = ExtensionAccountItem | ExternalAccountItem;
-
-export type InputItem = ImportedAccountItem | null;
-
-export interface DropdownInput {
-  key: string;
-  name: string;
-}
-
-export interface AccountDropdownProps {
-  current: InputItem;
-  to: MaybeAddress;
-}
 
 export type BondSetter = ({ bond }: { bond: BigNumber }) => void;
 

@@ -3,7 +3,6 @@
 
 import type { FC, FunctionComponent, ReactNode, SVGProps } from 'react';
 import type { Theme } from 'contexts/Themes/types';
-import type { ExtensionInjected } from '@w3ux/react-connect-kit/types';
 import type BigNumber from 'bignumber.js';
 import type { NotificationItem } from 'controllers/NotificationsController/types';
 import type { ActiveBalance } from 'contexts/Balances/types';
@@ -21,7 +20,6 @@ import type { OnlineStatusEvent } from 'controllers/OnlineStatusController/types
 declare global {
   interface Window {
     walletExtension?: AnyJson;
-    injectedWeb3?: Record<string, ExtensionInjected>;
     opera?: boolean;
   }
   interface DocumentEventMap {

@@ -101,8 +101,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
   // Subscribe to fast unstake queue as soon as api is ready.
   useEffect(() => {
     if (isReady) {
-      // TODO: subscribeToFastUnstakeQueue isn't working for a reason that isn't clear
-      // subscribeToFastUnstakeQueue();
+      subscribeToFastUnstakeQueue();
     }
   }, [isReady]);
 
@@ -272,10 +271,6 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // subscribe to fastUnstake queue
-  // TODO: subscribeToFastUnstakeQueue isn't working for a reason that isn't clear
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const subscribeToFastUnstakeQueue = async () => {
     if (!api) {
       return;

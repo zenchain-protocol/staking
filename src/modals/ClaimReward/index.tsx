@@ -29,9 +29,6 @@ export const ClaimReward = () => {
 
   const { claimType } = options;
 
-  // TODO: should this be true?
-  const valid = false;
-
   // tx to submit
   const getTx = () => {
     let tx = null;
@@ -50,7 +47,7 @@ export const ClaimReward = () => {
   const submitExtrinsic = useSubmitExtrinsic({
     tx: getTx(),
     from: activeAccount.address,
-    shouldSubmit: valid,
+    shouldSubmit: true,
     callbackSubmit: () => {
       setModalStatus('closing');
     },
@@ -80,7 +77,7 @@ export const ClaimReward = () => {
           <p>{t('claimReward2')}</p>
         )}
       </ModalPadding>
-      <SubmitTx valid={valid} {...submitExtrinsic} />
+      <SubmitTx valid={true} {...submitExtrinsic} />
     </>
   );
 };
