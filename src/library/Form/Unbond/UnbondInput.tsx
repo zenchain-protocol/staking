@@ -7,10 +7,10 @@ import type { ChangeEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { InputWrapper } from '../Wrappers';
 import type { UnbondInputProps } from '../types';
 import { ButtonSubmitInvert } from 'kits/Buttons/ButtonSubmitInvert';
+import { useAccount } from 'wagmi';
 
 export const UnbondInput = ({
   defaultValue,
@@ -22,7 +22,7 @@ export const UnbondInput = ({
 }: UnbondInputProps) => {
   const { t } = useTranslation('library');
   const { networkData } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // get the actively bonded amount.
   const activeUnit = planckToUnit(active, networkData.units);
@@ -33,7 +33,7 @@ export const UnbondInput = ({
   // reset value to default when changing account.
   useEffect(() => {
     setLocalBond(defaultValue ?? '0');
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // handle change for unbonding.
   const handleChangeUnbond = (e: ChangeEvent<HTMLInputElement>) => {

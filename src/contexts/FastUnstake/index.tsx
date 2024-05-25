@@ -17,13 +17,13 @@ import Worker from 'workers/stakers?worker';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { validateLocalExposure } from 'contexts/Validators/Utils';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { defaultFastUnstakeContext, defaultMeta } from './defaults';
 import type {
   FastUnstakeContextInterface,
   LocalMeta,
   MetaInterface,
 } from './types';
+import { useAccount } from 'wagmi';
 
 const worker = new Worker();
 
@@ -35,7 +35,7 @@ export const useFastUnstake = () => useContext(FastUnstakeContext);
 
 export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { inSetup, fetchEraStakers, isBonding } = useStaking();
   const {
     api,
@@ -96,7 +96,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Resubscribe to fast unstake queue.
-  }, [activeAccount, network]);
+  }, [activeAccount.address, network]);
 
   // Subscribe to fast unstake queue as soon as api is ready.
   useEffect(() => {
@@ -110,7 +110,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
   useEffectIgnoreInitial(() => {
     if (
       isReady &&
-      activeAccount &&
+      activeAccount.address &&
       isNotZero(activeEra.index) &&
       fastUnstakeErasToCheckPerBlock > 0 &&
       isBonding()
@@ -142,7 +142,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
       // start process if account is inactively nominating & local fast unstake data is not
       // complete.
       if (
-        activeAccount &&
+        activeAccount.address &&
         !inSetup() &&
         initialIsExposed === null &&
         isBonding()
@@ -154,7 +154,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
           : activeEra.index;
 
         // Check from the possible next era `maybeNextEra`.
-        processEligibility(activeAccount, maybeNextEra);
+        processEligibility(activeAccount.address, maybeNextEra);
       }
     }
 
@@ -183,7 +183,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
 
       // ensure still same conditions.
       const { networkName, who } = data;
-      if (networkName !== network || who !== activeAccount) {
+      if (networkName !== network || who !== activeAccount.address) {
         return;
       }
 
@@ -242,7 +242,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
       !api ||
       !a ||
       checkingRef.current ||
-      !activeAccount ||
+      !activeAccount.address ||
       !isBonding()
     ) {
       return;
@@ -263,7 +263,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
     worker.postMessage({
       task: 'processEraForExposure',
       era: era.toString(),
-      who: activeAccount,
+      who: activeAccount.address,
       networkName: network,
       exitOnExposed: true,
       maxExposurePageSize: maxExposurePageSize.toString(),
@@ -312,7 +312,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
 
     // initiate subscription, add to unsubs.
     await Promise.all([
-      subscribeQueue(activeAccount),
+      subscribeQueue(activeAccount.address),
       subscribeHead(),
       subscribeCounterForQueue(),
     ]).then((u) => {
@@ -322,7 +322,9 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
 
   // gets any existing fast unstake metadata for an account.
   const getLocalMeta = (): LocalMeta | null => {
-    const localMeta: AnyJson = localStorage.getItem(getLocalkey(activeAccount));
+    const localMeta: AnyJson = localStorage.getItem(
+      getLocalkey(activeAccount.address)
+    );
     if (!localMeta) {
       return null;
     }
@@ -333,12 +335,12 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
     );
     if (!localMetaValidated) {
       // remove if not valid.
-      localStorage.removeItem(getLocalkey(activeAccount));
+      localStorage.removeItem(getLocalkey(activeAccount.address));
       return null;
     }
     // set validated localStorage.
     localStorage.setItem(
-      getLocalkey(activeAccount),
+      getLocalkey(activeAccount.address),
       JSON.stringify(localMetaValidated)
     );
     return localMetaValidated;

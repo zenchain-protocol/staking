@@ -9,11 +9,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBonded } from 'contexts/Bonded';
 import { Polkicon } from '@w3ux/react-polkicon';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useNetwork } from 'contexts/Network';
 import { Wrapper } from './Wrapper';
 import type { PayeeInputProps } from './types';
+import { useAccount } from 'wagmi';
 
 export const PayeeInput = ({
   payee,
@@ -23,14 +22,11 @@ export const PayeeInput = ({
 }: PayeeInputProps) => {
   const { t } = useTranslation('library');
   const { getBondedAccount } = useBonded();
-  const { accounts } = useImportedAccounts();
   const {
     networkData: { ss58 },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
-  const controller = getBondedAccount(activeAccount);
-
-  const accountMeta = accounts.find((a) => a.address === activeAccount);
+  const activeAccount = useAccount();
+  const controller = getBondedAccount(activeAccount.address);
 
   // store whether account value is valid.
   const [valid, setValid] = useState<boolean>(isValidAddress(account || ''));
@@ -89,7 +85,7 @@ export const PayeeInput = ({
         ? ''
         : payee.destination === 'Controller'
           ? controller
-          : activeAccount;
+          : activeAccount.address;
 
   const placeholderDisplay =
     payee.destination === 'None' ? t('noPayoutAddress') : t('payoutAddress');
@@ -118,7 +114,9 @@ export const PayeeInput = ({
               onChange={handleChangeAccount}
             />
             <div ref={hiddenRef} className="hidden">
-              {payee.destination === 'Account' ? activeAccount : accountDisplay}
+              {payee.destination === 'Account'
+                ? activeAccount.address
+                : accountDisplay}
             </div>
           </div>
         </div>
@@ -137,10 +135,7 @@ export const PayeeInput = ({
               </>
             )
           ) : payee.destination === 'None' ? null : (
-            <>
-              <FontAwesomeIcon icon={faCheck} />
-              {accountMeta?.name || ''}
-            </>
+            <FontAwesomeIcon icon={faCheck} />
           )}
         </h5>
       </div>

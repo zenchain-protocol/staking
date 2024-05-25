@@ -7,15 +7,13 @@ import { useBonded } from 'contexts/Bonded';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { Default } from './Default';
-import { ManualSign } from './ManualSign';
 import type { SubmitTxProps } from './types';
 import { Tx } from 'kits/Structure/Tx';
+import { useAccount } from 'wagmi';
+import type { MaybeAddress } from '../../types';
 
 export const SubmitTx = ({
-  uid,
   onSubmit,
   submitText,
   buttons = [],
@@ -30,21 +28,20 @@ export const SubmitTx = ({
   const { getBondedAccount } = useBonded();
   const { unit } = useNetwork().networkData;
   const { setModalResize } = useOverlay().modal;
-  const { activeAccount } = useActiveAccounts();
-  const { notEnoughFunds, sender, setTxSignature } = useTxMeta();
-  const { getAccount, requiresManualSign } = useImportedAccounts();
-  const controller = getBondedAccount(activeAccount);
+  const activeAccount = useAccount();
+  const { notEnoughFunds, setTxSignature } = useTxMeta();
+  const controller = getBondedAccount(activeAccount.address);
 
   // Default to active account
-  let signingOpts = {
+  let signingOpts: { label: string; who: MaybeAddress } = {
     label: t('signer', { ns: 'library' }),
-    who: getAccount(activeAccount),
+    who: activeAccount.address,
   };
 
   if (fromController) {
     signingOpts = {
       label: t('signedByController', { ns: 'library' }),
-      who: getAccount(controller),
+      who: controller,
     };
   }
 
@@ -74,32 +71,19 @@ export const SubmitTx = ({
       displayFor={displayFor}
       margin={!noMargin}
       label={signingOpts.label}
-      name={signingOpts.who?.name || ''}
+      name={signingOpts.who || ''}
       notEnoughFunds={notEnoughFunds}
       dangerMessage={`${t('notEnough', { ns: 'library' })} ${unit}`}
       SignerComponent={
-        requiresManualSign(sender) ? (
-          <ManualSign
-            uid={uid}
-            onSubmit={onSubmit}
-            submitting={submitting}
-            valid={valid}
-            submitText={submitText}
-            buttons={buttons}
-            submitAddress={submitAddress}
-            displayFor={displayFor}
-          />
-        ) : (
-          <Default
-            onSubmit={onSubmit}
-            submitting={submitting}
-            valid={valid}
-            submitText={submitText}
-            buttons={buttons}
-            submitAddress={submitAddress}
-            displayFor={displayFor}
-          />
-        )
+        <Default
+          onSubmit={onSubmit}
+          submitting={submitting}
+          valid={valid}
+          submitText={submitText}
+          buttons={buttons}
+          submitAddress={submitAddress}
+          displayFor={displayFor}
+        />
       }
     />
   );

@@ -16,31 +16,26 @@ import { SliderWrapper } from 'modals/UpdateReserve/Wrappers';
 import 'rc-slider/assets/index.css';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { StyledSlider } from 'library/StyledSlider';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
+import { useAccount } from 'wagmi';
 
 export const UpdateReserve = () => {
   const { t } = useTranslation('modals');
   const {
-    network,
     networkData: { units, unit },
   } = useNetwork();
   const { openHelp } = useHelp();
   const { setModalStatus } = useOverlay().modal;
-  const { activeAccount } = useActiveAccounts();
-  const { accountHasSigner } = useImportedAccounts();
+  const activeAccount = useAccount();
   const { feeReserve, setFeeReserveBalance, getTransferOptions } =
     useTransferOptions();
 
-  const { edReserved } = getTransferOptions(activeAccount);
+  const { edReserved } = getTransferOptions(activeAccount.address);
   const minReserve = planckToUnit(edReserved, units);
-  const maxReserve = minReserve.plus(
-    ['polkadot', 'zenchain_testnet'].includes(network) ? 3 : 1
-  );
+  const maxReserve = minReserve.plus(3);
 
   const [sliderReserve, setSliderReserve] = useState<number>(
     planckToUnit(feeReserve, units).plus(minReserve).decimalPlaces(3).toNumber()
@@ -128,7 +123,7 @@ export const UpdateReserve = () => {
             <ButtonPrimaryInvert
               text={t('done')}
               onClick={() => setModalStatus('closing')}
-              disabled={!accountHasSigner(activeAccount)}
+              disabled={!activeAccount.address}
             />
           </div>
         </SliderWrapper>

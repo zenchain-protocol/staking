@@ -8,7 +8,6 @@ import { stringToU8a } from '@polkadot/util';
  */
 export const DappName = 'Zenchain Staking Dashboard';
 export const PolkadotUrl = 'https://polkadot.network/features/staking/';
-export const ManualSigners = ['ledger', 'vault'];
 
 /*
  * Byte Helpers

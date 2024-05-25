@@ -24,7 +24,6 @@ import { ValidatorItem } from 'library/ValidatorList/ValidatorItem';
 import type { Validator, ValidatorListEntry } from 'contexts/Validators/types';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
 import { useNominationStatus } from 'hooks/useNominationStatus';
 import { useValidatorFilters } from '../../hooks/useValidatorFilters';
@@ -35,6 +34,7 @@ import { FilterBadges } from './Filters/FilterBadges';
 import type { NominationStatus } from './ValidatorItem/types';
 import { useSyncing } from 'hooks/useSyncing';
 import { validatorsPerPage } from 'library/List/defaults';
+import { useAccount } from 'wagmi';
 
 export const ValidatorListInner = ({
   // Default list values.
@@ -78,7 +78,7 @@ export const ValidatorListInner = ({
   const listProvider = useList();
   const { syncing } = useSyncing();
   const { isReady, activeEra } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { setModalResize } = useOverlay().modal;
   const { injectValidatorListData } = useValidators();
   const { getNominationSetStatus } = useNominationStatus();
@@ -92,8 +92,8 @@ export const ValidatorListInner = ({
   const actionsAll = [...actions].filter((action) => !action.onSelected);
   const actionsSelected = [...actions].filter((action) => action.onSelected);
 
-  // Determine the nominator of the validator list. Fallback to activeAccount if not provided.
-  const nominator = initialNominator || activeAccount;
+  // Determine the nominator of the validator list. Fallback to activeAccount.address if not provided.
+  const nominator = initialNominator || activeAccount.address;
 
   // Store the current nomination status of validator records relative to the supplied nominator.
   const nominationStatus = useRef<Record<string, NominationStatus>>({});

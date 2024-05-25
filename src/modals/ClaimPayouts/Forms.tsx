@@ -17,7 +17,6 @@ import { useBatchCall } from 'hooks/useBatchCall';
 import type { AnyApi } from 'types';
 import { usePayouts } from 'contexts/Payouts';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import type { FormProps, ActivePayout } from './types';
 import { ContentWrapper } from './Wrappers';
 import { SubscanController } from 'controllers/SubscanController';
@@ -25,6 +24,7 @@ import { ButtonSubmitInvert } from 'kits/Buttons/ButtonSubmitInvert';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
 
 export const Forms = forwardRef(
   (
@@ -39,7 +39,7 @@ export const Forms = forwardRef(
     const { newBatchCall } = useBatchCall();
     const { removeEraPayout } = usePayouts();
     const { setModalStatus } = useOverlay().modal;
-    const { activeAccount } = useActiveAccounts();
+    const activeAccount = useAccount();
     const { getSignerWarnings } = useSignerWarnings();
 
     // Get the total payout amount.
@@ -98,19 +98,22 @@ export const Forms = forwardRef(
 
     const submitExtrinsic = useSubmitExtrinsic({
       tx: getTx(),
-      from: activeAccount,
+      from: activeAccount.address,
       shouldSubmit: valid,
       callbackSubmit: () => {
         setModalStatus('closing');
       },
       callbackInBlock: () => {
-        if (payouts && activeAccount) {
+        if (payouts && activeAccount.address) {
           // Remove Subscan unclaimed payout record(s) if they exist.
           const eraPayouts: string[] = [];
           payouts.forEach(({ era }) => {
             eraPayouts.push(String(era));
           });
-          SubscanController.removeUnclaimedPayouts(activeAccount, eraPayouts);
+          SubscanController.removeUnclaimedPayouts(
+            activeAccount.address,
+            eraPayouts
+          );
 
           // Deduct from `unclaimedPayouts` in Payouts context.
           payouts.forEach(({ era, paginatedValidators }) => {
@@ -124,7 +127,7 @@ export const Forms = forwardRef(
       },
     });
 
-    const warnings = getSignerWarnings(activeAccount, false);
+    const warnings = getSignerWarnings(activeAccount.address, false);
 
     return (
       <ContentWrapper>

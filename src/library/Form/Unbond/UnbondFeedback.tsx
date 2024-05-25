@@ -7,12 +7,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Warning } from '../Warning';
 import { Spacer } from '../Wrappers';
 import type { UnbondFeedbackProps } from '../types';
 import { UnbondInput } from './UnbondInput';
 import { useApi } from 'contexts/Api';
+import { useAccount } from 'wagmi';
 
 export const UnbondFeedback = ({
   bondFor,
@@ -28,12 +28,12 @@ export const UnbondFeedback = ({
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getTransferOptions } = useTransferOptions();
   const {
     stakingMetrics: { minNominatorBond },
   } = useApi();
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const defaultValue = defaultBond ? String(defaultBond) : '';
 
   // get bond options for either nominating or pooling.
@@ -114,7 +114,7 @@ export const UnbondFeedback = ({
   // update bond on account change
   useEffect(() => {
     setBond({ bond: defaultValue });
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // handle errors on input change
   useEffect(() => {

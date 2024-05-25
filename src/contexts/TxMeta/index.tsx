@@ -8,7 +8,6 @@ import { createContext, useContext, useRef, useState } from 'react';
 import { useBonded } from 'contexts/Bonded';
 import { useStaking } from 'contexts/Staking';
 import type { AnyJson, MaybeAddress } from 'types';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import * as defaults from './defaults';
 import type { TxMetaContextInterface } from './types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
@@ -27,7 +26,6 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
   } = useApi();
   const { getBondedAccount } = useBonded();
   const { getControllerNotImported } = useStaking();
-  const { accountHasSigner } = useImportedAccounts();
 
   // Store the transaction fees for the transaction.
   const [txFees, setTxFees] = useState<BigNumber>(new BigNumber(0));
@@ -100,16 +98,8 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
   const controllerSignerAvailable = (stash: MaybeAddress) => {
     const controller = getBondedAccount(stash);
 
-    if (controller !== stash) {
-      if (getControllerNotImported(controller)) {
-        return 'controller_not_imported';
-      }
-
-      if (!accountHasSigner(controller)) {
-        return 'read_only';
-      }
-    } else if (!accountHasSigner(stash)) {
-      return 'read_only';
+    if (controller !== stash && getControllerNotImported(controller)) {
+      return 'controller_not_imported';
     }
     return 'ok';
   };

@@ -7,7 +7,6 @@ import { ellipsisFn, unitToPlanck } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { useSetup } from 'contexts/Setup';
-import { Warning } from 'library/Form/Warning';
 import { useBatchCall } from 'hooks/useBatchCall';
 import { usePayeeConfig } from 'hooks/usePayeeConfig';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
@@ -17,10 +16,9 @@ import type { SetupStepProps } from 'library/SetupSteps/types';
 import { SubmitTx } from 'library/SubmitTx';
 import { useNetwork } from 'contexts/Network';
 import { useApi } from 'contexts/Api';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { SummaryWrapper } from './Wrapper';
 import { useOverlay } from 'kits/Overlay/Provider';
+import { useAccount } from 'wagmi';
 
 export const Summary = ({ section }: SetupStepProps) => {
   const { t } = useTranslation('pages');
@@ -31,16 +29,15 @@ export const Summary = ({ section }: SetupStepProps) => {
   const { newBatchCall } = useBatchCall();
   const { getPayeeItems } = usePayeeConfig();
   const { closeCanvas } = useOverlay().canvas;
-  const { accountHasSigner } = useImportedAccounts();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getNominatorSetup, removeSetupProgress } = useSetup();
 
-  const setup = getNominatorSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
   const { progress } = setup;
   const { bond, nominations, payee } = progress;
 
   const getTxs = () => {
-    if (!activeAccount || !api) {
+    if (!activeAccount.address || !api) {
       return null;
     }
 
@@ -69,14 +66,14 @@ export const Summary = ({ section }: SetupStepProps) => {
 
   const submitExtrinsic = useSubmitExtrinsic({
     tx: getTxs(),
-    from: activeAccount,
+    from: activeAccount.address,
     shouldSubmit: true,
     callbackInBlock: () => {
       // Close the canvas after the extrinsic is included in a block.
       closeCanvas();
 
       // Reset setup progress.
-      removeSetupProgress(activeAccount);
+      removeSetupProgress(activeAccount.address);
     },
   });
 
@@ -93,9 +90,6 @@ export const Summary = ({ section }: SetupStepProps) => {
         bondFor="nominator"
       />
       <MotionContainer thisSection={section} activeSection={setup.section}>
-        {!accountHasSigner(activeAccount) && (
-          <Warning text={t('nominate.readOnly')} />
-        )}
         <SummaryWrapper>
           <section>
             <div>

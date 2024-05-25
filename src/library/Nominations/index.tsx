@@ -11,14 +11,13 @@ import { useUnstaking } from 'hooks/useUnstaking';
 import { ValidatorList } from 'library/ValidatorList';
 import type { MaybeAddress } from 'types';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { ListStatusHeader } from 'library/List';
 import { Wrapper } from './Wrapper';
 import { useSyncing } from 'hooks/useSyncing';
 import { useBalances } from 'contexts/Balances';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
+import { useAccount } from 'wagmi';
 
 export const Nominations = ({
   bondFor,
@@ -38,13 +37,12 @@ export const Nominations = ({
   const { getNominations } = useBalances();
   const { isFastUnstaking } = useUnstaking();
   const { formatWithPrefs } = useValidators();
-  const { activeAccount } = useActiveAccounts();
-  const { isReadOnlyAccount } = useImportedAccounts();
+  const activeAccount = useAccount();
 
   // Derive nominations from `bondFor` type.
   const nominated =
     bondFor === 'nominator'
-      ? formatWithPrefs(getNominations(activeAccount))
+      ? formatWithPrefs(getNominations(activeAccount.address))
       : [];
 
   // Determine whether to display buttons.
@@ -54,8 +52,7 @@ export const Nominations = ({
   const displayBtns = nominated.length;
 
   // Determine whether buttons are disabled.
-  const btnsDisabled =
-    inSetup() || syncing || isReadOnlyAccount(activeAccount) || isFastUnstaking;
+  const btnsDisabled = inSetup() || syncing || isFastUnstaking;
 
   return (
     <Wrapper>

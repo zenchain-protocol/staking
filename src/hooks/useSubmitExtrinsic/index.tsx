@@ -4,16 +4,14 @@
 import BigNumber from 'bignumber.js';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DappName, ManualSigners } from 'consts';
 import { useApi } from 'contexts/Api';
-import { useLedgerHardware } from 'contexts/LedgerHardware';
 import { useTxMeta } from 'contexts/TxMeta';
 import type { AnyApi, AnyJson } from 'types';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useBuildPayload } from '../useBuildPayload';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
-import { useExtensions } from '@w3ux/react-connect-kit';
+import { useAccount } from 'wagmi';
+import { useGetConnection } from '../useGetConnection';
 
 export const useSubmitExtrinsic = ({
   tx,
@@ -25,10 +23,9 @@ export const useSubmitExtrinsic = ({
   const { t } = useTranslation('library');
   const { api } = useApi();
   const { buildPayload } = useBuildPayload();
-  const { extensionsStatus } = useExtensions();
-  const { handleResetLedgerTask } = useLedgerHardware();
   const { addPendingNonce, removePendingNonce } = useTxMeta();
-  const { getAccount, requiresManualSign } = useImportedAccounts();
+  const activeAccount = useAccount();
+  const { getConnection } = useGetConnection();
   const {
     txFees,
     setTxFees,
@@ -72,13 +69,13 @@ export const useSubmitExtrinsic = ({
 
   // Extrinsic submission handler.
   const onSubmit = async () => {
-    const account = getAccount(fromRef.current);
+    const account = getConnection(fromRef.current);
     if (
       account === null ||
       submitting ||
       !shouldSubmit ||
       !api ||
-      (requiresManualSign(fromRef.current) && !getTxSignature())
+      !getTxSignature()
     ) {
       return;
     }
@@ -87,24 +84,9 @@ export const useSubmitExtrinsic = ({
       await api.rpc.system.accountNextIndex(fromRef.current)
     ).toHuman();
 
-    const { source } = account;
-
     // if `activeAccount` is imported from an extension, ensure it is enabled.
-    if (!ManualSigners.includes(source)) {
-      const isInstalled = Object.entries(extensionsStatus).find(
-        ([id, status]) => id === source && status === 'connected'
-      );
-
-      if (!isInstalled) {
-        throw new Error(`${t('walletNotFound')}`);
-      }
-
-      if (!window?.injectedWeb3?.[source]) {
-        throw new Error(`${t('walletNotFound')}`);
-      }
-
-      // summons extension popup if not already connected.
-      window.injectedWeb3[source].enable(DappName);
+    if (!activeAccount.isConnected) {
+      throw new Error(`${t('walletNotFound')}`);
     }
 
     const onReady = () => {
@@ -154,14 +136,10 @@ export const useSubmitExtrinsic = ({
 
     const resetManualTx = () => {
       resetTx();
-      handleResetLedgerTask();
     };
 
-    const onError = (type?: string) => {
+    const onError = () => {
       resetTx();
-      if (type === 'ledger') {
-        handleResetLedgerTask();
-      }
       removePendingNonce(nonce);
       NotificationsController.emit({
         title: t('cancelled'),
@@ -210,15 +188,14 @@ export const useSubmitExtrinsic = ({
           }
         );
       } catch (e) {
-        onError(ManualSigners.includes(source) ? source : 'default');
+        onError();
       }
     } else {
       // handle unsigned transaction.
-      const { signer } = account;
       try {
         const unsub = await txRef.current.signAndSend(
           fromRef.current,
-          { signer },
+          { signer: account },
           ({ status, events = [] }: AnyApi) => {
             if (!didTxReset.current) {
               didTxReset.current = true;
@@ -237,7 +214,7 @@ export const useSubmitExtrinsic = ({
           }
         );
       } catch (e) {
-        onError('default');
+        onError();
       }
     }
   };

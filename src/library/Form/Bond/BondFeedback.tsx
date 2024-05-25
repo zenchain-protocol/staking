@@ -7,12 +7,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Warning } from '../Warning';
 import { Spacer } from '../Wrappers';
 import type { BondFeedbackProps } from '../types';
 import { BondInput } from './BondInput';
 import { useApi } from 'contexts/Api';
+import { useAccount } from 'wagmi';
 
 export const BondFeedback = ({
   bondFor,
@@ -32,12 +32,12 @@ export const BondFeedback = ({
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const {
     stakingMetrics: { minNominatorBond },
   } = useApi();
   const { getTransferOptions } = useTransferOptions();
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
 
   const defaultBondStr = defaultBond ? String(defaultBond) : '';
 
@@ -147,7 +147,7 @@ export const BondFeedback = ({
     setBond({
       bond: defaultBondStr,
     });
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // handle errors on input change
   useEffect(() => {

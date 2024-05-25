@@ -11,8 +11,6 @@ import { createContext, useContext, useState } from 'react';
 import type { MaybeAddress } from 'types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { defaultNominatorProgress, defaultSetupContext } from './defaults';
 import type {
   NominatorProgress,
@@ -20,6 +18,7 @@ import type {
   NominatorSetups,
   SetupContextInterface,
 } from './types';
+import { useAccount } from 'wagmi';
 
 export const SetupContext =
   createContext<SetupContextInterface>(defaultSetupContext);
@@ -31,8 +30,7 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     network,
     networkData: { units },
   } = useNetwork();
-  const { accounts } = useImportedAccounts();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Store all imported accounts nominator setups.
   const [nominatorSetups, setNominatorSetups] = useState<NominatorSetups>({});
@@ -81,25 +79,29 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
 
   // Sets setup progress for an address. Updates localStorage followed by app state.
   const setActiveAccountSetup = (progress: NominatorProgress) => {
-    if (!activeAccount) {
+    if (!activeAccount.address) {
       return;
     }
 
-    const updatedSetups = updateSetups(assignSetups(), progress, activeAccount);
+    const updatedSetups = updateSetups(
+      assignSetups(),
+      progress,
+      activeAccount.address
+    );
     setSetups(updatedSetups);
   };
 
   // Sets active setup section for an address.
   const setActiveAccountSetupSection = (section: number) => {
-    if (!activeAccount) {
+    if (!activeAccount.address) {
       return;
     }
 
     const setups = assignSetups();
     const updatedSetups = updateSetups(
       setups,
-      setups[activeAccount]?.progress ?? defaultProgress(),
-      activeAccount,
+      setups[activeAccount.address]?.progress ?? defaultProgress(),
+      activeAccount.address,
       section
     );
     setSetups(updatedSetups);
@@ -172,12 +174,12 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update setup state when activeAccount changes
+  // Update setup state when activeAccount.address changes
   useEffectIgnoreInitial(() => {
-    if (accounts.length) {
+    if (activeAccount.addresses?.length) {
       refreshSetups();
     }
-  }, [activeAccount, network, accounts]);
+  }, [activeAccount.address, network, activeAccount.addresses?.length]);
 
   return (
     <SetupContext.Provider

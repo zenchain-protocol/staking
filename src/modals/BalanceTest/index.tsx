@@ -11,15 +11,15 @@ import { Close } from 'library/Modal/Close';
 import { SubmitTx } from 'library/SubmitTx';
 import { useEffect } from 'react';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
+import { useAccount } from 'wagmi';
 
 export const BalanceTest = () => {
   const { api } = useApi();
   const {
     networkData: { units },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { notEnoughFunds } = useTxMeta();
   const { newBatchCall } = useBatchCall();
   const { setModalStatus, setModalResize } = useOverlay().modal;
@@ -27,7 +27,7 @@ export const BalanceTest = () => {
   // tx to submit
   const getTx = () => {
     const tx = null;
-    if (!api || !activeAccount) {
+    if (!api || !activeAccount.address) {
       return tx;
     }
 
@@ -50,7 +50,7 @@ export const BalanceTest = () => {
 
   const submitExtrinsic = useSubmitExtrinsic({
     tx: getTx(),
-    from: activeAccount,
+    from: activeAccount.address,
     shouldSubmit: true,
     callbackSubmit: () => {
       setModalStatus('closing');

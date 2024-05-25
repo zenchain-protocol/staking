@@ -10,7 +10,6 @@ import Worker from 'workers/stakers?worker';
 import { rmCommas, setStateWithRef } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { MaxSupportedPayoutEras, defaultPayoutsContext } from './defaults';
 import type {
   LocalValidatorExposure,
@@ -23,6 +22,7 @@ import {
   setLocalEraExposure,
   setLocalUnclaimedPayouts,
 } from './Utils';
+import { useAccount } from 'wagmi';
 
 const worker = new Worker();
 
@@ -35,7 +35,7 @@ export const usePayouts = () => useContext(PayoutsContext);
 export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork();
   const { api, consts, activeEra } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { isNominating, fetchEraStakers } = useStaking();
   const { maxExposurePageSize } = consts;
 
@@ -79,12 +79,12 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
   // Fetch exposure data for an era, and pass the data to the worker to determine the validator the
   // active account was backing in that era.
   const checkEra = async (era: BigNumber) => {
-    if (!activeAccount) {
+    if (!activeAccount.address) {
       return;
     }
 
     // Bypass worker if local exposure data is available.
-    if (hasLocalEraExposure(network, era.toString(), activeAccount)) {
+    if (hasLocalEraExposure(network, era.toString(), activeAccount.address)) {
       // Continue processing eras, or move onto reward processing.
       shouldContinueProcessing(era, getErasInterval().endEra);
     } else {
@@ -92,7 +92,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       worker.postMessage({
         task: 'processEraForExposure',
         era: String(era),
-        who: activeAccount,
+        who: activeAccount.address,
         networkName: network,
         maxExposurePageSize: maxExposurePageSize.toString(),
         exitOnExposed: false,
@@ -113,7 +113,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
       // Exit early if network or account conditions have changed.
       const { networkName, who } = data;
-      if (networkName !== network || who !== activeAccount) {
+      if (networkName !== network || who !== activeAccount.address) {
         return;
       }
       const { era, exposedValidators } = data;
@@ -135,7 +135,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
   // Start pending payout process once exposure data is fetched.
   const getUnclaimedPayouts = async () => {
-    if (!api || !activeAccount) {
+    if (!api || !activeAccount.address) {
       return;
     }
 
@@ -146,7 +146,11 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     let currentEra = startEra;
     while (currentEra.isGreaterThanOrEqualTo(endEra)) {
       const validators = Object.keys(
-        getLocalEraExposure(network, currentEra.toString(), activeAccount)
+        getLocalEraExposure(
+          network,
+          currentEra.toString(),
+          activeAccount.address
+        )
       );
       erasValidators.push(...validators);
       erasToCheck.push(currentEra.toString());
@@ -193,7 +197,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       const pages = results[i].toHuman() || [];
       const era = unclaimedRewardsEntries[i][0];
       const validator = unclaimedRewardsEntries[i][1];
-      const exposure = getLocalEraExposure(network, era, activeAccount);
+      const exposure = getLocalEraExposure(network, era, activeAccount.address);
       const exposedPage =
         exposure?.[validator]?.exposedPage !== undefined
           ? String(exposure[validator].exposedPage)
@@ -262,7 +266,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
         const localExposed: LocalValidatorExposure | null = getLocalEraExposure(
           network,
           era,
-          activeAccount
+          activeAccount.address
         )?.[validator];
 
         const staked = new BigNumber(localExposed?.staked || '0');
@@ -305,7 +309,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       setLocalUnclaimedPayouts(
         network,
         era,
-        activeAccount,
+        activeAccount.address,
         unclaimed[era],
         endEra.toString()
       );
@@ -326,20 +330,20 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
     // Delete the payout from local storage.
     const localPayouts = localStorage.getItem(`${network}_unclaimed_payouts`);
-    if (localPayouts && activeAccount) {
+    if (localPayouts && activeAccount.address) {
       const parsed = JSON.parse(localPayouts);
 
-      if (parsed?.[activeAccount]?.[era]?.[validator]) {
-        delete parsed[activeAccount][era][validator];
+      if (parsed?.[activeAccount.address]?.[era]?.[validator]) {
+        delete parsed[activeAccount.address][era][validator];
 
         // Delete the era if it has no more payouts.
-        if (Object.keys(parsed[activeAccount][era]).length === 0) {
-          delete parsed[activeAccount][era];
+        if (Object.keys(parsed[activeAccount.address][era]).length === 0) {
+          delete parsed[activeAccount.address][era];
         }
 
         // Delete the active account if it has no more eras.
-        if (Object.keys(parsed[activeAccount]).length === 0) {
-          delete parsed[activeAccount];
+        if (Object.keys(parsed[activeAccount.address]).length === 0) {
+          delete parsed[activeAccount.address];
         }
       }
       localStorage.setItem(
@@ -375,7 +379,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setUnclaimedPayouts(null);
     setStateWithRef('unsynced', setPayoutsSynced, payoutsSyncedRef);
-  }, [network, activeAccount]);
+  }, [network, activeAccount.address]);
 
   return (
     <PayoutsContext.Provider

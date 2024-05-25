@@ -8,10 +8,9 @@ import { usePayeeConfig } from 'hooks/usePayeeConfig';
 import { useUnstaking } from 'hooks/useUnstaking';
 import { Stat } from 'library/Stat';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useBalances } from 'contexts/Balances';
 import { useSyncing } from 'hooks/useSyncing';
+import { useAccount } from 'wagmi';
 
 export const PayoutDestinationStatus = () => {
   const { t } = useTranslation('pages');
@@ -21,10 +20,9 @@ export const PayoutDestinationStatus = () => {
   const { openModal } = useOverlay().modal;
   const { isFastUnstaking } = useUnstaking();
   const { getPayeeItems } = usePayeeConfig();
-  const { activeAccount } = useActiveAccounts();
-  const { isReadOnlyAccount } = useImportedAccounts();
+  const activeAccount = useAccount();
 
-  const payee = getPayee(activeAccount);
+  const payee = getPayee(activeAccount.address);
 
   // Get payee status text to display.
   const getPayeeStatus = () => {
@@ -60,11 +58,7 @@ export const PayoutDestinationStatus = () => {
                 title: t('nominate.update'),
                 icon: faGear,
                 small: true,
-                disabled:
-                  syncing ||
-                  inSetup() ||
-                  isReadOnlyAccount(activeAccount) ||
-                  isFastUnstaking,
+                disabled: syncing || inSetup() || isFastUnstaking,
                 onClick: () => openModal({ key: 'UpdatePayee', size: 'sm' }),
               },
             ]

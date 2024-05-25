@@ -11,15 +11,15 @@ import { Close } from 'library/Modal/Close';
 import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
+import { useAccount } from 'wagmi';
 
 export const ClaimReward = () => {
   const { t } = useTranslation('modals');
   const { api } = useApi();
   const { notEnoughFunds } = useTxMeta();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const {
     setModalStatus,
@@ -49,14 +49,14 @@ export const ClaimReward = () => {
 
   const submitExtrinsic = useSubmitExtrinsic({
     tx: getTx(),
-    from: activeAccount,
+    from: activeAccount.address,
     shouldSubmit: valid,
     callbackSubmit: () => {
       setModalStatus('closing');
     },
   });
 
-  const warnings = getSignerWarnings(activeAccount, false);
+  const warnings = getSignerWarnings(activeAccount.address, false);
 
   useEffect(() => setModalResize(), [notEnoughFunds, warnings.length]);
 

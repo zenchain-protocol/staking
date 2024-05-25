@@ -15,12 +15,11 @@ import { useUnstaking } from 'hooks/useUnstaking';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { BondedChart } from 'library/BarChart/BondedChart';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { ButtonRow } from 'kits/Structure/ButtonRow';
+import { useAccount } from 'wagmi';
 
 export const ManageBond = () => {
   const { t } = useTranslation('pages');
@@ -36,12 +35,11 @@ export const ManageBond = () => {
   const { getLedger } = useBalances();
   const { openModal } = useOverlay().modal;
   const { isFastUnstaking } = useUnstaking();
-  const { isReadOnlyAccount } = useImportedAccounts();
   const { getTransferOptions } = useTransferOptions();
-  const { activeAccount } = useActiveAccounts();
-  const ledger = getLedger({ stash: activeAccount });
+  const activeAccount = useAccount();
+  const ledger = getLedger({ stash: activeAccount.address });
   const { active }: { active: BigNumber } = ledger;
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
 
   const { freeBalance } = allTransferOptions;
   const { totalUnlocking, totalUnlocked, totalUnlockChunks } =
@@ -63,12 +61,7 @@ export const ManageBond = () => {
         </h2>
         <ButtonRow>
           <ButtonPrimary
-            disabled={
-              inSetup() ||
-              syncing ||
-              isReadOnlyAccount(activeAccount) ||
-              isFastUnstaking
-            }
+            disabled={inSetup() || syncing || isFastUnstaking}
             marginRight
             onClick={() =>
               openModal({
@@ -80,12 +73,7 @@ export const ManageBond = () => {
             text="+"
           />
           <ButtonPrimary
-            disabled={
-              inSetup() ||
-              syncing ||
-              isReadOnlyAccount(activeAccount) ||
-              isFastUnstaking
-            }
+            disabled={inSetup() || syncing || isFastUnstaking}
             marginRight
             onClick={() =>
               openModal({
@@ -97,7 +85,7 @@ export const ManageBond = () => {
             text="-"
           />
           <ButtonPrimary
-            disabled={syncing || inSetup() || isReadOnlyAccount(activeAccount)}
+            disabled={syncing || inSetup()}
             iconLeft={faLockOpen}
             marginRight
             onClick={() =>

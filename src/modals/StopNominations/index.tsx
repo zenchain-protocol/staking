@@ -12,11 +12,11 @@ import { Close } from 'library/Modal/Close';
 import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ModalSeparator } from 'kits/Overlay/structure/ModalSeparator';
+import { useAccount } from 'wagmi';
 
 export const StopNominations = () => {
   const { t } = useTranslation('modals');
@@ -24,7 +24,7 @@ export const StopNominations = () => {
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { getNominations } = useBalances();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const {
     setModalStatus,
@@ -34,9 +34,9 @@ export const StopNominations = () => {
 
   const { bondFor } = options;
   const isStaking = bondFor === 'nominator';
-  const signingAccount = getBondedAccount(activeAccount);
+  const signingAccount = getBondedAccount(activeAccount.address);
 
-  const nominations = getNominations(activeAccount);
+  const nominations = getNominations(activeAccount.address);
 
   // valid to submit transaction
   const [valid, setValid] = useState<boolean>(false);
@@ -70,7 +70,7 @@ export const StopNominations = () => {
     },
   });
 
-  const warnings = getSignerWarnings(activeAccount, isStaking);
+  const warnings = getSignerWarnings(activeAccount.address, isStaking);
 
   if (!nominations.length) {
     warnings.push(`${t('noNominationsSet')}`);

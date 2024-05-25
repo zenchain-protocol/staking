@@ -4,16 +4,17 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { MaybeAddress } from 'types';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import * as defaults from './defaults';
 import type { BalancesContextInterface } from './types';
 import { useEventListener } from 'usehooks-ts';
 import { isCustomEvent } from 'controllers/utils';
 import { BalancesController } from 'controllers/BalancesController';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useActiveBalances } from 'hooks/useActiveBalances';
 import { useBonded } from 'contexts/Bonded';
 import { SyncController } from 'controllers/SyncController';
+import { useAccount } from 'wagmi';
+import { useEffectIgnoreInitial } from '@w3ux/hooks';
+import { useApi } from '../Api';
 
 export const BalancesContext = createContext<BalancesContextInterface>(
   defaults.defaultBalancesContext
@@ -23,9 +24,9 @@ export const useBalances = () => useContext(BalancesContext);
 
 export const BalancesProvider = ({ children }: { children: ReactNode }) => {
   const { getBondedAccount } = useBonded();
-  const { accounts } = useImportedAccounts();
-  const { activeAccount } = useActiveAccounts();
-  const controller = getBondedAccount(activeAccount);
+  const activeAccount = useAccount();
+  const controller = getBondedAccount(activeAccount.address);
+  const { isReady, api } = useApi();
 
   // Listen to balance updates for the active account and controller.
   const {
@@ -36,7 +37,7 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
     getPayee,
     getNominations,
   } = useActiveBalances({
-    accounts: [activeAccount, controller],
+    accounts: [activeAccount.address, controller],
   });
 
   // Check all accounts have been synced. App-wide syncing state for all accounts.
@@ -52,7 +53,10 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
 
   // Check whether all accounts have been synced and update state accordingly.
   const checkBalancesSynced = () => {
-    if (Object.keys(BalancesController.balances).length === accounts.length) {
+    if (
+      Object.keys(BalancesController.balances).length ===
+      activeAccount.addresses?.length
+    ) {
       SyncController.dispatch('balances', 'complete');
     }
   };
@@ -80,10 +84,17 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
 
   // If no accounts are imported, set balances synced to true.
   useEffect(() => {
-    if (!accounts.length) {
+    if (!activeAccount.addresses?.length) {
       SyncController.dispatch('balances', 'complete');
     }
-  }, [accounts.length]);
+  }, [activeAccount.addresses?.length]);
+
+  // Keep accounts in sync with `BalancesController`.
+  useEffectIgnoreInitial(() => {
+    if (api && isReady && activeAccount.addresses) {
+      BalancesController.syncAccounts(api, activeAccount.addresses as string[]);
+    }
+  }, [isReady, activeAccount.addresses]);
 
   return (
     <BalancesContext.Provider

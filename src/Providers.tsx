@@ -3,15 +3,8 @@
 
 import { BalancesProvider } from 'contexts/Balances';
 import { BondedProvider } from 'contexts/Bonded';
-import {
-  ExtensionsProvider,
-  ExtensionAccountsProvider,
-  LedgerAccountsProvider,
-  VaultAccountsProvider,
-} from '@w3ux/react-connect-kit';
 import { FastUnstakeProvider } from 'contexts/FastUnstake';
 import { FiltersProvider } from 'contexts/Filters';
-import { LedgerHardwareProvider } from 'contexts/LedgerHardware';
 import { HelpProvider } from 'contexts/Help';
 import { MenuProvider } from 'contexts/Menu';
 import { MigrateProvider } from 'contexts/Migrate';
@@ -29,11 +22,6 @@ import { PayoutsProvider } from 'contexts/Payouts';
 import { useNetwork } from 'contexts/Network';
 import { APIProvider } from 'contexts/Api';
 import { ThemedRouter } from 'Themes';
-import { OtherAccountsProvider } from 'contexts/Connect/OtherAccounts';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { DappName } from 'consts';
-import { ImportedAccountsProvider } from 'contexts/Connect/ImportedAccounts';
-import { ExternalAccountsProvider } from 'contexts/Connect/ExternalAccounts';
 import type { Provider } from 'hooks/withProviders';
 import { withProviders } from 'hooks/withProviders';
 import { CommunityProvider } from 'contexts/Community';
@@ -42,27 +30,12 @@ import { EthereumProvider } from './contexts/Ethereum';
 
 export const Providers = () => {
   const { network } = useNetwork();
-  const { activeAccount, setActiveAccount } = useActiveAccounts();
 
   // !! Provider order matters.
   const providers: Provider[] = [
     UIProvider,
     [APIProvider, { network }],
     EthereumProvider,
-    LedgerHardwareProvider,
-    [
-      ExtensionsProvider,
-      { options: { chainSafeSnapEnabled: true, polkagateSnapEnabled: true } },
-    ],
-    [
-      ExtensionAccountsProvider,
-      { dappName: DappName, network, activeAccount, setActiveAccount },
-    ],
-    VaultAccountsProvider,
-    LedgerAccountsProvider,
-    ExternalAccountsProvider,
-    OtherAccountsProvider,
-    ImportedAccountsProvider,
     HelpProvider,
     PluginsProvider,
     BondedProvider,

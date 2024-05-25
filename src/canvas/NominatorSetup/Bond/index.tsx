@@ -12,14 +12,14 @@ import { Footer } from 'library/SetupSteps/Footer';
 import { Header } from 'library/SetupSteps/Header';
 import { MotionContainer } from 'library/SetupSteps/MotionContainer';
 import type { SetupStepProps } from 'library/SetupSteps/types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
+import { useAccount } from 'wagmi';
 
 export const Bond = ({ section }: SetupStepProps) => {
   const { t } = useTranslation('pages');
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { txFees } = useTxMeta();
   const { getNominatorSetup, setActiveAccountSetup } = useSetup();
-  const setup = getNominatorSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
   const { progress } = setup;
 
   // either free to bond or existing setup value
@@ -51,7 +51,7 @@ export const Bond = ({ section }: SetupStepProps) => {
     setBond({
       bond: initialBondValue,
     });
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // apply initial bond value to setup progress
   useEffect(() => {

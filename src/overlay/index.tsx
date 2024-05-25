@@ -10,10 +10,7 @@ import { Bond } from '../modals/Bond';
 import { StopNominations } from '../modals/StopNominations';
 import { ChooseLanguage } from '../modals/ChooseLanguage';
 import { ClaimReward } from '../modals/ClaimReward';
-import { Connect } from '../modals/Connect';
 import { GoToFeedback } from '../modals/GoToFeedback';
-import { ImportLedger } from '../modals/ImportLedger';
-import { ImportVault } from '../modals/ImportVault';
 import { ManageFastUnstake } from '../modals/ManageFastUnstake';
 import { Networks } from '../modals/Networks';
 import { Settings } from '../modals/Settings';
@@ -41,11 +38,8 @@ export const Overlays = () => {
         ChooseLanguage,
         ClaimPayouts,
         ClaimReward,
-        Connect,
         Accounts,
         GoToFeedback,
-        ImportLedger,
-        ImportVault,
         ManageFastUnstake,
         Networks,
         Settings,

@@ -5,7 +5,6 @@ import { faArrowAltCircleUp } from '@fortawesome/free-regular-svg-icons';
 import type { ReactNode } from 'react';
 import { useTxMeta } from 'contexts/TxMeta';
 import { EstimatedTxFee } from 'library/EstimatedTxFee';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import type { SubmitProps } from './types';
 import { ButtonSubmit } from 'kits/Buttons/ButtonSubmit';
 import { ButtonSubmitLarge } from './ButtonSubmitLarge';
@@ -17,14 +16,11 @@ export const Default = ({
   valid,
   submitText,
   buttons,
-  submitAddress,
   displayFor,
 }: SubmitProps & { buttons?: ReactNode[] }) => {
   const { txFeesValid } = useTxMeta();
-  const { accountHasSigner } = useImportedAccounts();
 
-  const disabled =
-    submitting || !valid || !accountHasSigner(submitAddress) || !txFeesValid;
+  const disabled = submitting || !valid || !txFeesValid;
 
   return (
     <>

@@ -15,17 +15,17 @@ import { Header } from 'library/SetupSteps/Header';
 import { MotionContainer } from 'library/SetupSteps/MotionContainer';
 import type { SetupStepProps } from 'library/SetupSteps/types';
 import type { MaybeAddress } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Subheading } from 'pages/Nominate/Wrappers';
 import { defaultPayee } from 'controllers/BalancesController/defaults';
+import { useAccount } from 'wagmi';
 
 export const Payee = ({ section }: SetupStepProps) => {
   const { t } = useTranslation('pages');
   const { getPayeeItems } = usePayeeConfig();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getNominatorSetup, setActiveAccountSetup } = useSetup();
 
-  const setup = getNominatorSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
   const { progress } = setup;
   const { payee } = progress;
 
@@ -63,7 +63,7 @@ export const Payee = ({ section }: SetupStepProps) => {
         payee: defaultPayee,
       });
     }
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   return (
     <>

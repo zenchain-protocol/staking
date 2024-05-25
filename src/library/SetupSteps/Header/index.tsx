@@ -3,12 +3,12 @@
 
 import { useTranslation } from 'react-i18next';
 import { useSetup } from 'contexts/Setup';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import type { HeaderProps } from '../types';
 import { Wrapper } from './Wrapper';
 import { useHelp } from 'contexts/Help';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonSecondary } from 'kits/Buttons/ButtonSecondary';
+import { useAccount } from 'wagmi';
 
 export const Header = ({
   title,
@@ -18,10 +18,10 @@ export const Header = ({
 }: HeaderProps) => {
   const { t } = useTranslation('library');
   const { openHelp } = useHelp();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getNominatorSetup, setActiveAccountSetupSection } = useSetup();
 
-  const setup = getNominatorSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
 
   return (
     <Wrapper>

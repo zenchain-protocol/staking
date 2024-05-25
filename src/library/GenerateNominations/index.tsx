@@ -21,8 +21,6 @@ import { ValidatorList } from 'library/ValidatorList';
 import { Wrapper } from './Wrapper';
 import { useStaking } from 'contexts/Staking';
 import { useFavoriteValidators } from 'contexts/Validators/FavoriteValidators';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import type { Validator } from 'contexts/Validators/types';
 import { Subheading } from 'pages/Nominate/Wrappers';
 import { FavoritesPrompt } from 'canvas/ManageNominations/Prompts/FavoritesPrompt';
@@ -32,6 +30,7 @@ import type { AddNominationsType, GenerateNominationsProps } from './types';
 import type { AnyJson, AnyFunction } from 'types';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ButtonMonoInvert } from 'kits/Buttons/ButtonMonoInvert';
+import { useAccount } from 'wagmi';
 
 export const GenerateNominations = ({
   setters = [],
@@ -42,10 +41,9 @@ export const GenerateNominations = ({
   const { isReady, consts } = useApi();
   const { isFastUnstaking } = useUnstaking();
   const { stakers } = useStaking().eraStakers;
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { favoritesList } = useFavoriteValidators();
   const { openPromptWith, closePrompt } = usePrompt();
-  const { isReadOnlyAccount } = useImportedAccounts();
   const { validators, validatorsFetched } = useValidators();
   const {
     fetch: fetchFromMethod,
@@ -86,7 +84,7 @@ export const GenerateNominations = ({
         setMethod('manual');
       }
     }
-  }, [activeAccount, defaultNominations]);
+  }, [activeAccount.address, defaultNominations]);
 
   // refetch if fetching is triggered
   useEffect(() => {
@@ -321,7 +319,7 @@ export const GenerateNominations = ({
         }}
       >
         <div>
-          {!isReadOnlyAccount(activeAccount) && !method && (
+          {!method && (
             <>
               <Subheading>
                 <h4>

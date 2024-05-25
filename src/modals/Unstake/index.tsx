@@ -20,11 +20,11 @@ import { StaticNote } from 'modals/Utils/StaticNote';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
 
 export const Unstake = () => {
   const { t } = useTranslation('modals');
@@ -36,16 +36,16 @@ export const Unstake = () => {
   const { newBatchCall } = useBatchCall();
   const { getBondedAccount } = useBonded();
   const { getNominations } = useBalances();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { erasToSeconds } = useErasToTimeLeft();
   const { getSignerWarnings } = useSignerWarnings();
   const { getTransferOptions } = useTransferOptions();
   const { setModalStatus, setModalResize } = useOverlay().modal;
 
-  const controller = getBondedAccount(activeAccount);
-  const nominations = getNominations(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const nominations = getNominations(activeAccount.address);
   const { bondDuration } = consts;
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { active } = allTransferOptions.nominate;
 
   const bondDurationFormatted = timeleftAsString(
@@ -81,7 +81,7 @@ export const Unstake = () => {
   // tx to submit
   const getTx = () => {
     const tx = null;
-    if (!api || !activeAccount) {
+    if (!api || !activeAccount.address) {
       return tx;
     }
     // remove decimal errors
@@ -107,7 +107,7 @@ export const Unstake = () => {
     },
   });
 
-  const warnings = getSignerWarnings(activeAccount, true);
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   return (
     <>

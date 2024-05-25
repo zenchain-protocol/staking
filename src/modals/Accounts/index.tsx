@@ -1,11 +1,9 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { faChevronLeft, faLinkSlash } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { Fragment, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { AccountButton } from './Account';
 import { AccountSeparator, AccountWrapper } from './Wrappers';
 import type { AccountNominating, AccountNotStaking } from './types';
@@ -15,11 +13,11 @@ import { useTransferOptions } from 'contexts/TransferOptions';
 import BigNumber from 'bignumber.js';
 import { useApi } from 'contexts/Api';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
-import { ButtonText } from 'kits/Buttons/ButtonText';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalCustomHeader } from 'kits/Overlay/structure/ModalCustomHeader';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
 
 export const Accounts = () => {
   const { t } = useTranslation('modals');
@@ -31,13 +29,12 @@ export const Accounts = () => {
     status: modalStatus,
     setModalResize,
   } = useOverlay().modal;
-  const { accounts } = useImportedAccounts();
   const { getFeeReserve } = useTransferOptions();
-  const { activeAccount, setActiveAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Listen to balance updates for entire accounts list.
   const { getLocks, getBalance, getEdReserved } = useActiveBalances({
-    accounts: accounts.map(({ address }) => address),
+    accounts: activeAccount.addresses ?? [],
   });
 
   // Calculate transferrable balance of an address.
@@ -57,7 +54,7 @@ export const Accounts = () => {
 
   const stashes: string[] = [];
   // accumulate imported stash accounts
-  for (const { address } of accounts) {
+  for (const address of activeAccount.addresses ?? []) {
     const { locks } = getLocks(address);
 
     // account is a stash if they have an active `staking` lock
@@ -70,7 +67,7 @@ export const Accounts = () => {
   const nominating: AccountNominating[] = [];
   const notStaking: AccountNotStaking[] = [];
 
-  for (const { address } of accounts) {
+  for (const address of activeAccount.addresses ?? []) {
     let isNominating = false;
     const isStash = stashes[stashes.indexOf(address)] ?? null;
 
@@ -100,8 +97,7 @@ export const Accounts = () => {
       setModalResize();
     }
   }, [
-    accounts,
-    activeAccount,
+    activeAccount.addresses,
     JSON.stringify(nominating),
     JSON.stringify(notStaking),
   ]);
@@ -121,22 +117,8 @@ export const Accounts = () => {
             marginLeft
           />
         </div>
-        <div>
-          {activeAccount && (
-            <ButtonText
-              style={{
-                color: 'var(--accent-color-primary)',
-              }}
-              text={t('disconnect')}
-              iconRight={faLinkSlash}
-              onClick={() => {
-                setActiveAccount(null);
-              }}
-            />
-          )}
-        </div>
       </ModalCustomHeader>
-      {!activeAccount && !accounts.length && (
+      {!activeAccount && (
         <AccountWrapper style={{ marginTop: '1.5rem' }}>
           <div>
             <div>

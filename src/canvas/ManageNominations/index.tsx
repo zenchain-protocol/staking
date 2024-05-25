@@ -11,7 +11,6 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { usePrompt } from 'contexts/Prompt';
 import { useHelp } from 'contexts/Help';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBonded } from 'contexts/Bonded';
 import { SubmitTx } from 'library/SubmitTx';
 import type {
@@ -24,6 +23,7 @@ import { NotificationsController } from 'controllers/NotificationsController';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
+import { useAccount } from 'wagmi';
 
 export const ManageNominations = () => {
   const { t } = useTranslation('library');
@@ -35,11 +35,11 @@ export const ManageNominations = () => {
   const { openHelp } = useHelp();
   const { consts, api } = useApi();
   const { getBondedAccount } = useBonded();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { openPromptWith, closePrompt } = usePrompt();
 
   const { maxNominations } = consts;
-  const signingAccount = getBondedAccount(activeAccount);
+  const signingAccount = getBondedAccount(activeAccount.address);
 
   // Valid to submit transaction.
   const [valid, setValid] = useState<boolean>(false);

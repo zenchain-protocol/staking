@@ -21,15 +21,15 @@ import { SubmitTx } from 'library/SubmitTx';
 import { StaticNote } from 'modals/Utils/StaticNote';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
+import { useAccount } from 'wagmi';
 
 export const Unbond = () => {
   const { t } = useTranslation('modals');
   const { txFees } = useTxMeta();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const {
@@ -48,7 +48,7 @@ export const Unbond = () => {
 
   const { bondFor } = options;
   const isStaking = bondFor === 'nominator';
-  const controller = getBondedAccount(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
   const { bondDuration } = consts;
 
   const bondDurationFormatted = timeleftAsString(
@@ -58,7 +58,7 @@ export const Unbond = () => {
     true
   );
 
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { active: activeBn } = allTransferOptions.nominate;
 
   // convert BigNumber values to number
@@ -87,7 +87,7 @@ export const Unbond = () => {
   // tx to submit
   const getTx = () => {
     let tx = null;
-    if (!api || !activeAccount) {
+    if (!api || !activeAccount.address) {
       return tx;
     }
 
@@ -115,7 +115,7 @@ export const Unbond = () => {
     activeBn.isLessThan(minNominatorBondBn);
 
   // accumulate warnings.
-  const warnings = getSignerWarnings(activeAccount, true);
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   if (nominatorActiveBelowMin) {
     warnings.push(

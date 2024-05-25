@@ -12,7 +12,6 @@ import { useTransferOptions } from 'contexts/TransferOptions';
 import { useFillVariables } from 'hooks/useFillVariables';
 import type { AnyJson } from 'types';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Items } from './Items';
 import { PageToggle } from './PageToggle';
 import { Syncing } from './Syncing';
@@ -21,6 +20,7 @@ import type { TipDisplay } from './types';
 import { useApi } from 'contexts/Api';
 import { useSyncing } from 'hooks/useSyncing';
 import { DefaultLocale } from 'locale';
+import { useAccount } from 'wagmi';
 
 export const Tips = () => {
   const { i18n, t } = useTranslation();
@@ -29,12 +29,12 @@ export const Tips = () => {
     stakingMetrics: { minNominatorBond },
   } = useApi();
   const { isNominating } = useStaking();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { fillVariables } = useFillVariables();
   const { syncing } = useSyncing(['initialization']);
   const { feeReserve, getTransferOptions } = useTransferOptions();
 
-  const transferOptions = getTransferOptions(activeAccount);
+  const transferOptions = getTransferOptions(activeAccount.address);
 
   // multiple tips per row is currently turned off.
   const multiTipsPerRow = false;
@@ -87,7 +87,7 @@ export const Tips = () => {
   // re-sync page when active account changes
   useEffect(() => {
     setStateWithRef(getPage(), setPage, pageRef);
-  }, [activeAccount, network]);
+  }, [activeAccount.address, network]);
 
   // resize event listener
   useEffect(() => {

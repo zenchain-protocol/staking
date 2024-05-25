@@ -16,10 +16,9 @@ import { CardHeaderWrapper } from 'library/Card/Wrappers';
 import { usePrices } from 'hooks/usePrices';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 import { ButtonTertiary } from 'kits/Buttons/ButtonTertiary';
+import { useAccount } from 'wagmi';
 
 export const BalanceChart = () => {
   const { t } = useTranslation('pages');
@@ -33,14 +32,13 @@ export const BalanceChart = () => {
   const prices = usePrices();
   const { plugins } = usePlugins();
   const { openModal } = useOverlay().modal;
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getBalance, getLocks } = useBalances();
   const { syncing } = useSyncing(['initialization']);
-  const { accountHasSigner } = useImportedAccounts();
   const { feeReserve, getTransferOptions } = useTransferOptions();
 
-  const balance = getBalance(activeAccount);
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const balance = getBalance(activeAccount.address);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { edReserved } = allTransferOptions;
 
   // User's total balance.
@@ -60,7 +58,7 @@ export const BalanceChart = () => {
   );
 
   // Check account non-staking locks.
-  const { locks } = getLocks(activeAccount);
+  const { locks } = getLocks(activeAccount.address);
   const locksStaking = locks.find(({ id }) => id === 'staking');
   const lockStakingAmount = locksStaking
     ? locksStaking.amount
@@ -230,11 +228,7 @@ export const BalanceChart = () => {
                             : faCheck
                     }
                     iconTransform="shrink-1"
-                    disabled={
-                      !activeAccount ||
-                      syncing ||
-                      !accountHasSigner(activeAccount)
-                    }
+                    disabled={!activeAccount.address || syncing}
                   />
                 }
               />

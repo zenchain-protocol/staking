@@ -18,11 +18,11 @@ import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
+import { useAccount } from 'wagmi';
 
 export const ManageFastUnstake = () => {
   const { t } = useTranslation('modals');
@@ -35,7 +35,7 @@ export const ManageFastUnstake = () => {
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { isFastUnstaking } = useUnstaking();
@@ -45,8 +45,8 @@ export const ManageFastUnstake = () => {
   const { isExposed, counterForQueue, queueDeposit, meta } = useFastUnstake();
 
   const { checked } = meta;
-  const controller = getBondedAccount(activeAccount);
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { nominate, transferrableBalance } = allTransferOptions;
   const { totalUnlockChunks } = nominate;
 
@@ -104,7 +104,7 @@ export const ManageFastUnstake = () => {
   });
 
   // warnings
-  const warnings = getSignerWarnings(activeAccount, true);
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   if (!isFastUnstaking) {
     if (!enoughForDeposit) {

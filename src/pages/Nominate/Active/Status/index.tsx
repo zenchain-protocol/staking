@@ -9,14 +9,10 @@ import { Separator } from 'kits/Structure/Separator';
 import { useSyncing } from 'hooks/useSyncing';
 import { useStaking } from 'contexts/Staking';
 import { NewNominator } from './NewNominator';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 
 export const Status = ({ height }: { height: number }) => {
   const { syncing } = useSyncing();
   const { inSetup } = useStaking();
-  const { activeAccount } = useActiveAccounts();
-  const { isReadOnlyAccount } = useImportedAccounts();
 
   return (
     <CardWrapper
@@ -34,9 +30,7 @@ export const Status = ({ height }: { height: number }) => {
             <PayoutDestinationStatus />
           </>
         ) : (
-          !isReadOnlyAccount(activeAccount) && (
-            <NewNominator syncing={syncing} />
-          )
+          <NewNominator syncing={syncing} />
         )
       ) : (
         <NewNominator syncing={syncing} />

@@ -7,24 +7,20 @@ import { ellipsisFn, remToUnit } from '@w3ux/utils';
 import { useTranslation } from 'react-i18next';
 import type { NotificationText } from 'controllers/NotificationsController/types';
 import { Polkicon } from '@w3ux/react-polkicon';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { ItemWrapper } from './Wrappers';
 import type { ActiveAccountProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 
 export const Item = ({ address }: ActiveAccountProps) => {
   const { t } = useTranslation('pages');
-  const { getAccount } = useImportedAccounts();
-
   const primaryAddress = address || '';
-  const accountData = getAccount(primaryAddress);
 
   // click to copy notification
   let notification: NotificationText | null = null;
-  if (accountData !== null) {
+  if (primaryAddress) {
     notification = {
       title: t('overview.addressCopied'),
-      subtitle: accountData.address,
+      subtitle: primaryAddress,
     };
   }
 
@@ -32,7 +28,7 @@ export const Item = ({ address }: ActiveAccountProps) => {
     <ItemWrapper>
       <div className="title">
         <h4>
-          {accountData && (
+          {address && (
             <>
               <div className="icon">
                 <Polkicon address={primaryAddress} size={remToUnit('1.7rem')} />
@@ -53,18 +49,10 @@ export const Item = ({ address }: ActiveAccountProps) => {
                   transform="shrink-4"
                 />
               </button>
-              {accountData.name !== ellipsisFn(primaryAddress) && (
-                <>
-                  <div className="sep" />
-                  <div className="rest">
-                    <span className="name">{accountData.name}</span>
-                  </div>
-                </>
-              )}
             </>
           )}
 
-          {!accountData ? t('overview.noActiveAccount') : null}
+          {!address ? t('overview.noActiveaddress') : null}
         </h4>
       </div>
     </ItemWrapper>

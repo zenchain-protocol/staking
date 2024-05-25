@@ -19,10 +19,10 @@ import { SubmitTx } from 'library/SubmitTx';
 import type { MaybeAddress } from 'types';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
+import { useAccount } from 'wagmi';
 
 export const UpdatePayee = () => {
   const { t } = useTranslation('modals');
@@ -31,12 +31,12 @@ export const UpdatePayee = () => {
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { getPayeeItems } = usePayeeConfig();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const { setModalStatus, setModalResize } = useOverlay().modal;
 
-  const controller = getBondedAccount(activeAccount);
-  const payee = getPayee(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const payee = getPayee(activeAccount.address);
 
   const DefaultSelected: PayeeConfig = {
     destination: null,
@@ -101,7 +101,7 @@ export const UpdatePayee = () => {
   // Reset selected value on account change.
   useEffect(() => {
     setSelected(DefaultSelected);
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // Inject default value after component mount.
   useEffect(() => {
@@ -120,7 +120,7 @@ export const UpdatePayee = () => {
 
   useEffect(() => setModalResize(), [notEnoughFunds]);
 
-  const warnings = getSignerWarnings(activeAccount, true);
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   return (
     <>

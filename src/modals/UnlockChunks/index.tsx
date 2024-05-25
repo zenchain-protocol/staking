@@ -8,14 +8,13 @@ import { useBalances } from 'contexts/Balances';
 import { Title } from 'library/Modal/Title';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useLedgerHardware } from 'contexts/LedgerHardware';
 import { Forms } from './Forms';
 import { Overview } from './Overview';
 import type { UnlockChunk } from 'contexts/Balances/types';
 import { ModalSection } from 'kits/Overlay/structure/ModalSection';
 import { ModalFixedTitle } from 'kits/Overlay/structure/ModalFixedTitle';
 import { ModalMotionTwoSection } from 'kits/Overlay/structure/ModalMotionTwoSection';
+import { useAccount } from 'wagmi';
 
 export const UnlockChunks = () => {
   const { t } = useTranslation('modals');
@@ -26,12 +25,12 @@ export const UnlockChunks = () => {
   } = useOverlay().modal;
   const { getLedger } = useBalances();
   const { notEnoughFunds } = useTxMeta();
-  const { activeAccount } = useActiveAccounts();
-  const { integrityChecked } = useLedgerHardware();
+  const activeAccount = useAccount();
   const { bondFor } = options || {};
 
   // get the unlocking
-  const getUnlocking = () => getLedger({ stash: activeAccount }).unlocking;
+  const getUnlocking = () =>
+    getLedger({ stash: activeAccount.address }).unlocking;
 
   const unlocking = getUnlocking();
 
@@ -77,14 +76,7 @@ export const UnlockChunks = () => {
   // resize modal on state change
   useEffect(() => {
     setModalHeight(getModalHeight());
-  }, [
-    task,
-    calculateHeight,
-    notEnoughFunds,
-    sectionRef.current,
-    unlocking,
-    integrityChecked,
-  ]);
+  }, [task, calculateHeight, notEnoughFunds, sectionRef.current, unlocking]);
 
   // resize this modal on window resize
   useEffect(() => {

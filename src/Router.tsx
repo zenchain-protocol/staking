@@ -1,7 +1,6 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { extractUrlValue } from '@w3ux/utils';
 import { useEffect, useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
@@ -24,24 +23,20 @@ import { SideMenu } from 'library/SideMenu';
 import { Tooltip } from 'library/Tooltip';
 import { Overlays } from 'overlay';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useOtherAccounts } from 'contexts/Connect/OtherAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { Notifications } from 'library/Notifications';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { Page } from 'Page';
 import { Body } from 'kits/Structure/Body';
 import { Main } from 'kits/Structure/Main';
 import { Offline } from 'library/Offline';
+import { useAccount } from 'wagmi';
 
 const RouterInner = () => {
   const { t } = useTranslation();
   const { network } = useNetwork();
   const { pathname } = useLocation();
   const { setContainerRefs } = useUi();
-  const { accounts } = useImportedAccounts();
-  const { accountsInitialised } = useOtherAccounts();
-  const { activeAccount, setActiveAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // References to outer container.
   const mainInterfaceRef = useRef<HTMLDivElement>(null);
@@ -58,25 +53,14 @@ const RouterInner = () => {
     });
   }, []);
 
-  // Open default account modal if url var present and accounts initialised.
   useEffect(() => {
-    if (accountsInitialised) {
-      const aUrl = extractUrlValue('a');
-      if (aUrl) {
-        const account = accounts.find((a) => a.address === aUrl);
-        if (account && aUrl !== activeAccount) {
-          setActiveAccount(account.address || null);
-
-          NotificationsController.emit({
-            title: t('accountConnected', { ns: 'library' }),
-            subtitle: `${t('connectedTo', { ns: 'library' })} ${
-              account.name || aUrl
-            }.`,
-          });
-        }
-      }
+    if (activeAccount.isConnected && activeAccount.address) {
+      NotificationsController.emit({
+        title: t('accountConnected', { ns: 'library' }),
+        subtitle: `${t('connectedTo', { ns: 'library' })} ${activeAccount.address}.`,
+      });
     }
-  }, [accountsInitialised]);
+  }, [activeAccount.isConnected, activeAccount.address]);
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackApp}>

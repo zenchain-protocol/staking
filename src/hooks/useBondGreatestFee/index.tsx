@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useApi } from 'contexts/Api';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import type { BondFor } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
+import { useAccount } from 'wagmi';
 
 interface Props {
   bondFor: BondFor;
@@ -14,10 +14,10 @@ interface Props {
 
 export const useBondGreatestFee = ({ bondFor }: Props) => {
   const { api } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const transferOptions = useMemo(
-    () => getTransferOptions(activeAccount),
+    () => getTransferOptions(activeAccount.address),
     [activeAccount]
   );
   const { transferrableBalance } = transferOptions;
@@ -53,7 +53,7 @@ export const useBondGreatestFee = ({ bondFor }: Props) => {
     }
 
     if (tx) {
-      const { partialFee } = await tx.paymentInfo(activeAccount || '');
+      const { partialFee } = await tx.paymentInfo(activeAccount.address || '');
       return new BigNumber(partialFee.toString());
     }
     return new BigNumber(0);

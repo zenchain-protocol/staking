@@ -15,13 +15,13 @@ import { isCustomEvent } from 'controllers/utils';
 import { useEventListener } from 'usehooks-ts';
 import { useErasToTimeLeft } from '../useErasToTimeLeft';
 import { useApi } from 'contexts/Api';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
+import { useAccount } from 'wagmi';
 
 export const useSubscanData = (keys: PayoutType[]) => {
   const { activeEra } = useApi();
   const { pluginEnabled } = usePlugins();
   const { erasToSeconds } = useErasToTimeLeft();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Store the most up to date subscan data state.
   const [data, setData] = useState<SubscanData>({});
@@ -33,15 +33,15 @@ export const useSubscanData = (keys: PayoutType[]) => {
     // NOTE: Subscan has to be enabled to continue.
     if (isCustomEvent(e) && pluginEnabled('subscan')) {
       const { keys: receivedKeys }: { keys: PayoutType[] } = e.detail;
+      const account = activeAccount.address;
 
       // Filter out any keys that are not provided to the hook active account is still present.
-      if (activeAccount) {
+      if (account) {
         const newData: SubscanData = {};
         receivedKeys
           .filter((key) => keys.includes(key))
           .forEach((key) => {
-            newData[key] =
-              SubscanController.payoutData[activeAccount]?.[key] || [];
+            newData[key] = SubscanController.payoutData[account]?.[key] || [];
           });
 
         setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef);
@@ -85,10 +85,11 @@ export const useSubscanData = (keys: PayoutType[]) => {
 
   // Populate state on initial render if data is already available.
   useEffect(() => {
-    if (activeAccount) {
+    const account = activeAccount.address;
+    if (account) {
       const newData: SubscanData = {};
       keys.forEach((key: PayoutType) => {
-        newData[key] = SubscanController.payoutData[activeAccount]?.[key] || [];
+        newData[key] = SubscanController.payoutData[account]?.[key] || [];
       });
       setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef);
     }

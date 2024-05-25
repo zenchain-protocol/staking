@@ -16,8 +16,8 @@ import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
+import { useAccount } from 'wagmi';
 
 export const Bond = () => {
   const { t } = useTranslation('modals');
@@ -26,7 +26,7 @@ export const Bond = () => {
     networkData: { units },
   } = useNetwork();
   const { notEnoughFunds } = useTxMeta();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const {
@@ -37,7 +37,9 @@ export const Bond = () => {
 
   const { bondFor } = options;
   const isStaking = bondFor === 'nominator';
-  const { nominate, transferrableBalance } = getTransferOptions(activeAccount);
+  const { nominate, transferrableBalance } = getTransferOptions(
+    activeAccount.address
+  );
 
   const freeToBond = planckToUnit(
     (bondFor === 'nominator'
@@ -103,7 +105,7 @@ export const Bond = () => {
 
   // the actual bond tx to submit
   const getTx = (bondToSubmit: BigNumber) => {
-    if (!api || !activeAccount) {
+    if (!api || !activeAccount.address) {
       return null;
     }
     return determineTx(bondToSubmit);
@@ -111,14 +113,14 @@ export const Bond = () => {
 
   const submitExtrinsic = useSubmitExtrinsic({
     tx: getTx(bondAfterTxFees),
-    from: activeAccount,
+    from: activeAccount.address,
     shouldSubmit: bondValid,
     callbackSubmit: () => {
       setModalStatus('closing');
     },
   });
 
-  const warnings = getSignerWarnings(activeAccount, false);
+  const warnings = getSignerWarnings(activeAccount.address, false);
 
   // update bond value on task change.
   useEffect(() => {

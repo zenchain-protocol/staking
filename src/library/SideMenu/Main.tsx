@@ -14,12 +14,11 @@ import { useUi } from 'contexts/UI';
 import type { UIContextInterface } from 'contexts/UI/types';
 import type { AnyJson, PageCategory, PageItem, PagesConfigItems } from 'types';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { Heading } from './Heading/Heading';
 import { Primary } from './Primary';
 import { LogoWrapper } from './Wrapper';
 import { useSyncing } from 'hooks/useSyncing';
+import { useAccount } from 'wagmi';
 
 export const Main = () => {
   const { t, i18n } = useTranslation('base');
@@ -27,13 +26,12 @@ export const Main = () => {
   const { pathname } = useLocation();
   const { networkData } = useNetwork();
   const { getBondedAccount } = useBonded();
-  const { accounts } = useImportedAccounts();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { inSetup: inNominatorSetup, addressDifferentToStash } = useStaking();
   const { getNominatorSetupPercent }: SetupContextInterface = useSetup();
   const { sideMenuMinimised }: UIContextInterface = useUi();
 
-  const controller = getBondedAccount(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
   const controllerDifferentToStash = addressDifferentToStash(controller);
 
   const [pageConfig, setPageConfig] = useState<AnyJson>({
@@ -42,7 +40,7 @@ export const Main = () => {
   });
 
   useEffect(() => {
-    if (!accounts.length) {
+    if (!activeAccount.address) {
       return;
     }
 
@@ -92,12 +90,11 @@ export const Main = () => {
     });
   }, [
     networkData,
-    activeAccount,
-    accounts,
+    activeAccount.address,
     controllerDifferentToStash,
     syncing,
     inNominatorSetup(),
-    getNominatorSetupPercent(activeAccount),
+    getNominatorSetupPercent(activeAccount.address),
     i18n.resolvedLanguage,
   ]);
 

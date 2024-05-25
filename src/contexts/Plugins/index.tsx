@@ -10,9 +10,9 @@ import type { PluginsContextInterface } from './types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useApi } from 'contexts/Api';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { SubscanController } from 'controllers/SubscanController';
 import { getAvailablePlugins } from './Utils';
+import { useAccount } from 'wagmi';
 
 export const PluginsContext = createContext<PluginsContextInterface>(
   defaults.defaultPluginsContext
@@ -23,7 +23,7 @@ export const usePlugins = () => useContext(PluginsContext);
 export const PluginsProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork();
   const { isReady, activeEra } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Store the currently active plugins.
   const [plugins, setPlugins] = useState<Plugin[]>(getAvailablePlugins());
@@ -53,11 +53,17 @@ export const PluginsProvider = ({ children }: { children: ReactNode }) => {
       SubscanController.resetData();
     } else if (isReady && isNotZero(activeEra.index)) {
       SubscanController.network = network;
-      if (activeAccount) {
-        SubscanController.handleFetchPayouts(activeAccount);
+      if (activeAccount.address) {
+        SubscanController.handleFetchPayouts(activeAccount.address);
       }
     }
-  }, [plugins.includes('subscan'), isReady, network, activeAccount, activeEra]);
+  }, [
+    plugins.includes('subscan'),
+    isReady,
+    network,
+    activeAccount.address,
+    activeEra,
+  ]);
 
   return (
     <PluginsContext.Provider

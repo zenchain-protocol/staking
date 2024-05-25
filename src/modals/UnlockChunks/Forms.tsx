@@ -15,13 +15,13 @@ import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
 import { SubmitTx } from 'library/SubmitTx';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ContentWrapper } from './Wrappers';
 import type { FormsProps } from './types';
 import { ButtonSubmitInvert } from 'kits/Buttons/ButtonSubmitInvert';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
 
 export const Forms = forwardRef(
   (
@@ -33,7 +33,7 @@ export const Forms = forwardRef(
     const {
       networkData: { units, unit },
     } = useNetwork();
-    const { activeAccount } = useActiveAccounts();
+    const activeAccount = useAccount();
     const {
       setModalStatus,
       config: { options },
@@ -43,7 +43,7 @@ export const Forms = forwardRef(
 
     const { bondFor } = options || {};
     const { historyDepth } = consts;
-    const controller = getBondedAccount(activeAccount);
+    const controller = getBondedAccount(activeAccount.address);
 
     const isStaking = bondFor === 'nominator';
 
@@ -66,7 +66,7 @@ export const Forms = forwardRef(
       }
       return tx;
     };
-    const signingAccount = isStaking ? controller : activeAccount;
+    const signingAccount = isStaking ? controller : activeAccount.address;
     const submitExtrinsic = useSubmitExtrinsic({
       tx: getTx(),
       from: signingAccount,
@@ -78,7 +78,7 @@ export const Forms = forwardRef(
 
     const value = unlock?.value ?? new BigNumber(0);
 
-    const warnings = getSignerWarnings(activeAccount, isStaking);
+    const warnings = getSignerWarnings(activeAccount.address, isStaking);
 
     // Ensure unlock value is valid.
     useEffect(() => {

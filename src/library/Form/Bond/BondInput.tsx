@@ -6,10 +6,10 @@ import type { ChangeEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { InputWrapper } from '../Wrappers';
 import type { BondInputProps } from '../types';
 import { ButtonSubmitInvert } from 'kits/Buttons/ButtonSubmitInvert';
+import { useAccount } from 'wagmi';
 
 export const BondInput = ({
   setters = [],
@@ -24,7 +24,7 @@ export const BondInput = ({
   const {
     networkData: { unit },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // the current local bond value
   const [localBond, setLocalBond] = useState<string>(value);
@@ -32,7 +32,7 @@ export const BondInput = ({
   // reset value to default when changing account.
   useEffect(() => {
     setLocalBond(defaultValue ?? '0');
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   useEffect(() => {
     if (!disableTxFeeUpdate) {

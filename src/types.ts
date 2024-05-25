@@ -126,7 +126,7 @@ interface PageProp {
   key: string;
 }
 
-export type MaybeAddress = string | null;
+export type MaybeAddress = `0x${string}` | string | null | undefined;
 
 export type MaybeString = string | null;
 

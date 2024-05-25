@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
-import type { MaybeAddress } from '@w3ux/react-connect-kit/types';
 import { setStateWithRef } from '@w3ux/utils';
 import type {
   ActiveBalancesState,
@@ -24,11 +23,12 @@ import {
   defaultPayee,
 } from 'controllers/BalancesController/defaults';
 import type { PayeeConfig } from 'contexts/Setup/types';
+import type { MaybeAddress } from '../../types';
 
 export const useActiveBalances = ({
   accounts,
 }: {
-  accounts: MaybeAddress[];
+  accounts: MaybeAddress[] | readonly MaybeAddress[];
 }) => {
   const { network } = useNetwork();
 
