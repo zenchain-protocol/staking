@@ -9,7 +9,14 @@ import {
   setStateWithRef,
 } from '@w3ux/utils';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  useMemo,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useApi } from 'contexts/Api';
 import type { AnyApi, MaybeAddress } from 'types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
@@ -28,7 +35,13 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork();
   const { api, isReady } = useApi();
   const connections = useConnections();
-  const connectedAccounts = connections.flatMap((conn) => conn.accounts);
+  const connectedAccounts = useMemo(
+    () =>
+      connections
+        .flatMap((conn) => conn.accounts)
+        .map((account) => ({ address: account })),
+    [connections]
+  );
 
   // Bonded accounts state.
   const [bondedAccounts, setBondedAccounts] = useState<BondedAccount[]>([]);

@@ -62,8 +62,7 @@ export const useSubscanData = (keys: PayoutType[]) => {
     const result: SubscanPayoutData = {};
 
     withKeys.forEach((key: PayoutType) => {
-      const keyData = (data[key] || []) as SubscanPayout[];
-      result[key] = keyData;
+      result[key] = (data[key] || []) as SubscanPayout[];
     });
     return result;
   };
@@ -93,7 +92,7 @@ export const useSubscanData = (keys: PayoutType[]) => {
       });
       setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef);
     }
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   return { data, getData, injectBlockTimestamp };
 };
