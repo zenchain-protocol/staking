@@ -26,11 +26,6 @@ export const Settings = () => {
             label="Subscan API"
             onClick={() => togglePlugin('subscan')}
           />
-          <StatusButton
-            checked={plugins.includes('polkawatch')}
-            label="Polkawatch API"
-            onClick={() => togglePlugin('polkawatch')}
-          />
           {!DISABLE_FIAT && (
             <StatusButton
               checked={plugins.includes('binance_spot')}

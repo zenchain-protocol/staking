@@ -4,7 +4,6 @@
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from 'contexts/Network';
-import { useStaking } from 'contexts/Staking';
 import { MoreWrapper } from './Wrappers';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { Separator } from 'kits/Structure/Separator';
@@ -13,7 +12,6 @@ import { useAccount } from 'wagmi';
 export const BalanceLinks = () => {
   const { t } = useTranslation('pages');
   const { network } = useNetwork();
-  const { isNominating } = useStaking();
   const activeAccount = useAccount();
 
   return (
@@ -34,25 +32,6 @@ export const BalanceLinks = () => {
           text="Subscan"
           marginRight
           disabled={!activeAccount.address}
-        />
-        <ButtonPrimaryInvert
-          lg
-          onClick={() =>
-            window.open(
-              `https://${network}.polkawatch.app/nomination/${activeAccount.address}`,
-              '_blank'
-            )
-          }
-          iconRight={faExternalLinkAlt}
-          iconTransform="shrink-2"
-          text="Polkawatch"
-          disabled={
-            !(
-              activeAccount.address &&
-              ['polkadot', 'zenchain_testnet'].includes(network) &&
-              isNominating()
-            )
-          }
         />
       </section>
     </MoreWrapper>

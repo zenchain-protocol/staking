@@ -191,7 +191,6 @@
     "payoutDestination": "Payout Destination",
     "pendingPayout_one": "{{count}} Pending Payout",
     "pendingPayout_other": "{{count}} Pending Payouts",
-    "polkawatchDisabled": "Polkawatch Disabled",
     "pool": "Pool",
     "poolAddress": " Pool {{type}} Address",
     "poolIsNotNominating": "Pool is Not Nominating.",

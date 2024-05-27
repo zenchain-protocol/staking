@@ -20,7 +20,6 @@ import { Unstake } from '../modals/Unstake';
 import { UpdatePayee } from '../modals/UpdatePayee';
 import { UpdateReserve } from '../modals/UpdateReserve';
 import { ValidatorMetrics } from '../modals/ValidatorMetrics';
-import { ValidatorGeo } from '../modals/ValidatorGeo';
 import { ManageNominations } from '../canvas/ManageNominations';
 import { NominatorSetup } from 'canvas/NominatorSetup';
 import { Overlay } from 'kits/Overlay';
@@ -44,7 +43,6 @@ export const Overlays = () => {
         Networks,
         Settings,
         ValidatorMetrics,
-        ValidatorGeo,
         UnlockChunks,
         Unstake,
         Unbond,

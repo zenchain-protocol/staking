@@ -1,11 +1,7 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import {
-  faBars,
-  faChartLine,
-  faGlobe,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useTranslation } from 'react-i18next';
 import { useMenu } from 'contexts/Menu';
@@ -13,7 +9,6 @@ import { CopyAddress } from 'library/ListItem/Labels/CopyAddress';
 import { ParaValidator } from 'library/ListItem/Labels/ParaValidator';
 import { Labels, Separator, Wrapper } from 'library/ListItem/Wrappers';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { usePlugins } from 'contexts/Plugins';
 import type { AnyJson } from 'types';
 import { Quartile } from 'library/ListItem/Labels/Quartile';
 import { useValidators } from '../../../contexts/Validators/ValidatorEntries';
@@ -38,7 +33,6 @@ export const Default = ({
   const { t } = useTranslation('library');
   const { selectActive } = useList();
   const { openMenu, open } = useMenu();
-  const { pluginEnabled } = usePlugins();
   const { openModal } = useOverlay().modal;
   const { validatorIdentities } = useValidators();
 
@@ -63,23 +57,6 @@ export const Default = ({
       });
     },
   });
-
-  if (pluginEnabled('polkawatch')) {
-    menuItems.push({
-      icon: <FontAwesomeIcon icon={faGlobe} transform="shrink-3" />,
-      wrap: null,
-      title: `${t('viewDecentralization')}`,
-      cb: () => {
-        openModal({
-          key: 'ValidatorGeo',
-          options: {
-            address,
-            identity,
-          },
-        });
-      },
-    });
-  }
 
   // Handler for opening menu.
   const toggleMenu = (ev: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
