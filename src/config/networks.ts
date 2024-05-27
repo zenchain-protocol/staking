@@ -148,8 +148,8 @@ export const NetworkList: Networks = {
       },
     },
     api: {
-      unit: 'KSM',
-      priceTicker: 'KSMUSDT',
+      unit: 'ZCX',
+      priceTicker: 'ZCXUSDT',
     },
     defaultFeeReserve: 0.05,
     maxExposurePageSize: new BigNumber(512),

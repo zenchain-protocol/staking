@@ -67,6 +67,7 @@ export const useSubmitExtrinsic = ({
     }
   };
 
+  // TODO: test extrinsic submission
   // Extrinsic submission handler.
   const onSubmit = async () => {
     const account = getConnection(fromRef.current);
