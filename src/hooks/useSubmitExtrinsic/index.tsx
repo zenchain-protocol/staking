@@ -134,10 +134,6 @@ export const useSubmitExtrinsic = ({
       setSubmitting(false);
     };
 
-    const resetManualTx = () => {
-      resetTx();
-    };
-
     const onError = () => {
       resetTx();
       removePendingNonce(nonce);
@@ -173,7 +169,7 @@ export const useSubmitExtrinsic = ({
           ({ status, events = [] }: AnyApi) => {
             if (!didTxReset.current) {
               didTxReset.current = true;
-              resetManualTx();
+              resetTx();
             }
 
             handleStatus(status);
@@ -195,7 +191,6 @@ export const useSubmitExtrinsic = ({
       try {
         const unsub = await txRef.current.signAndSend(
           fromRef.current,
-          { signer: account },
           ({ status, events = [] }: AnyApi) => {
             if (!didTxReset.current) {
               didTxReset.current = true;

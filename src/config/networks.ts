@@ -100,12 +100,14 @@ export const NetworkList: Networks = {
     chainId: 8408,
     endpoints: {
       lightClient: 'zenchain_testnet',
-      defaultRpcEndpoint: 'localhost',
+      defaultRpcEndpoint: 'onFinality',
       wsRpcEndpoints: {
         localhost: 'ws://localhost:9944',
+        onFinality: `wss://node-7199424157743243264.gx.onfinality.io/ws?apikey=${import.meta.env.VITE_ON_FINALITY_API_KEY}`,
       },
       jsonRpcEndpoints: {
-        localhost: 'http://localhost:9944',
+        localhost: `http://localhost:9944`,
+        onFinality: `https://node-7199424157743243264.gx.onfinality.io/jsonrpc?apikey=${import.meta.env.VITE_ON_FINALITY_API_KEY}`,
       },
     },
     colors: {
