@@ -31,6 +31,9 @@ import {
 import { getLocalEraValidators, setLocalEraValidators } from '../Utils';
 import { useErasPerDay } from 'hooks/useErasPerDay';
 import { IdentitiesController } from 'controllers/IdentitiesController';
+import { usePublicClient } from 'wagmi';
+import { mainnet } from 'wagmi/chains';
+import type { PublicClient } from 'viem';
 
 export const ValidatorsContext = createContext<ValidatorsContextInterface>(
   defaultValidatorsContext
@@ -48,6 +51,8 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   } = useApi();
   const { stakers } = useStaking().eraStakers;
   const { erasPerDay, maxSupportedDays } = useErasPerDay();
+
+  const viemClient = usePublicClient({ chainId: mainnet.id }) as PublicClient;
 
   // Stores all validator entries.
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -310,6 +315,7 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
 
     const addresses = validatorEntries.map(({ address }) => address);
     const identities = await IdentitiesController.fetch(
+      viemClient,
       addresses as `0x${string}`[]
     );
     setValidatorIdentities(identities);
