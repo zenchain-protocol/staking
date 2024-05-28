@@ -11,7 +11,7 @@ import { useBuildPayload } from '../useBuildPayload';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { useAccount } from 'wagmi';
-import { useGetConnection } from '../useGetConnection';
+import { web3FromAddress } from '@polkadot/extension-dapp';
 
 export const useSubmitExtrinsic = ({
   tx,
@@ -25,7 +25,6 @@ export const useSubmitExtrinsic = ({
   const { buildPayload } = useBuildPayload();
   const { addPendingNonce, removePendingNonce } = useTxMeta();
   const activeAccount = useAccount();
-  const { getConnection } = useGetConnection();
   const {
     txFees,
     setTxFees,
@@ -67,28 +66,25 @@ export const useSubmitExtrinsic = ({
     }
   };
 
-  // TODO: test extrinsic submission
   // Extrinsic submission handler.
   const onSubmit = async () => {
-    const account = getConnection(fromRef.current);
-    if (
-      account === null ||
-      submitting ||
-      !shouldSubmit ||
-      !api ||
-      !getTxSignature()
-    ) {
+    if (submitting || !shouldSubmit || !api) {
       return;
     }
+
+    // if `activeAccount` is imported from an extension, ensure it is enabled.
+    if (
+      !activeAccount.isConnected ||
+      activeAccount.address !== fromRef.current
+    ) {
+      throw new Error(`${t('walletNotFound')}`);
+    }
+
+    const injector = await web3FromAddress(fromRef.current);
 
     const nonce = (
       await api.rpc.system.accountNextIndex(fromRef.current)
     ).toHuman();
-
-    // if `activeAccount` is imported from an extension, ensure it is enabled.
-    if (!activeAccount.isConnected) {
-      throw new Error(`${t('walletNotFound')}`);
-    }
 
     const onReady = () => {
       addPendingNonce(nonce);
@@ -192,6 +188,7 @@ export const useSubmitExtrinsic = ({
       try {
         const unsub = await txRef.current.signAndSend(
           fromRef.current,
+          { signer: injector.signer },
           ({ status, events = [] }: AnyApi) => {
             if (!didTxReset.current) {
               didTxReset.current = true;
