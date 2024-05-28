@@ -1,12 +1,7 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-export type SyncID =
-  | 'initialization'
-  | 'balances'
-  | 'era-stakers'
-  | 'bonded-pools'
-  | 'active-pools';
+export type SyncID = 'initialization' | 'balances' | 'era-stakers';
 
 export interface SyncEvent {
   id: SyncID;
