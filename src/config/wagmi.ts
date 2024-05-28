@@ -1,8 +1,16 @@
 import { crossChainJsonRpcEndpoints, NetworkList } from './networks';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import type { Chain } from '@rainbow-me/rainbowkit';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { createConfig, http } from 'wagmi';
+import {
+  braveWallet,
+  coinbaseWallet,
+  frameWallet,
+  metaMaskWallet,
+  rainbowWallet,
+  trustWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { mainnet } from 'wagmi/chains';
-import { http } from 'wagmi';
 
 const zcTestnetEndpoints = NetworkList['zenchain_testnet'].endpoints;
 const zenchainTestnet = {
@@ -40,11 +48,38 @@ const zenchainTestnet = {
   // },
 } as const satisfies Chain;
 
-export const wagmiConfig = getDefaultConfig({
-  appName: 'Zenchain Staking',
-  projectId: '20ab57bb9999f58c6d3f2408e7d7cfc4',
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Recommended',
+      wallets: [
+        metaMaskWallet,
+        coinbaseWallet,
+        braveWallet,
+        frameWallet,
+        rainbowWallet,
+        trustWallet,
+      ],
+    },
+  ],
+  {
+    appName: 'Zenchain Staking',
+    projectId: '20ab57bb9999f58c6d3f2408e7d7cfc4',
+  }
+);
+
+export const wagmiConfig = createConfig({
+  connectors,
   ssr: false,
-  chains: [zenchainTestnet, mainnet],
+  chains: [zenchainTestnet],
+  transports: {
+    [zenchainTestnet.id]: http(zenchainTestnet.rpcUrls.default.http[0]),
+  },
+});
+
+export const mainnetWagmiConfig = createConfig({
+  ssr: false,
+  chains: [mainnet],
   transports: {
     [mainnet.id]: http(crossChainJsonRpcEndpoints.mainnet),
   },
