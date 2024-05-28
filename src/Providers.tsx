@@ -38,7 +38,6 @@ import type { Provider } from 'hooks/withProviders';
 import { withProviders } from 'hooks/withProviders';
 import { CommunityProvider } from 'contexts/Community';
 import { OverlayProvider } from 'kits/Overlay/Provider';
-import { EthereumProvider } from './contexts/Ethereum';
 
 export const Providers = () => {
   const { network } = useNetwork();
@@ -48,7 +47,6 @@ export const Providers = () => {
   const providers: Provider[] = [
     UIProvider,
     [APIProvider, { network }],
-    EthereumProvider,
     LedgerHardwareProvider,
     [
       ExtensionsProvider,
