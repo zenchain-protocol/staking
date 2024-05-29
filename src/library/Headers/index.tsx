@@ -14,7 +14,6 @@ export const Headers = () => (
     {/* Spinner to show app syncing. */}
     <Sync />
 
-    {/* TODO: customize connect button */}
     {/* Connect button. */}
     <ConnectButton />
   </Wrapper>

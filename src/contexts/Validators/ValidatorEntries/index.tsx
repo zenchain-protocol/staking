@@ -53,6 +53,7 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   const { erasPerDay, maxSupportedDays } = useErasPerDay();
 
   const mainnetViemClient = usePublicClient({
+    chainId: 1,
     config: mainnetWagmiConfig,
   }) as PublicClient;
 

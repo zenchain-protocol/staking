@@ -6,7 +6,7 @@ import type { PublicClient } from 'viem';
 import type { ViemCall } from './types';
 import { ensResolverAbi, ensRegistryAbi } from './types';
 
-// TODO: test implementation
+// TODO: need to test this implementation
 export class IdentitiesController {
   // Fetches identities for addresses.
   static fetch = async (

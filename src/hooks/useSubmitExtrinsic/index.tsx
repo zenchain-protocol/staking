@@ -11,7 +11,7 @@ import { useBuildPayload } from '../useBuildPayload';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { useAccount } from 'wagmi';
-import { web3FromAddress } from '@polkadot/extension-dapp';
+import { web3Enable, web3FromAddress } from '@polkadot/extension-dapp';
 
 export const useSubmitExtrinsic = ({
   tx,
@@ -79,8 +79,6 @@ export const useSubmitExtrinsic = ({
     ) {
       throw new Error(`${t('walletNotFound')}`);
     }
-
-    const injector = await web3FromAddress(fromRef.current);
 
     const nonce = (
       await api.rpc.system.accountNextIndex(fromRef.current)
@@ -186,6 +184,8 @@ export const useSubmitExtrinsic = ({
     } else {
       // handle unsigned transaction.
       try {
+        await web3Enable('Zenchain Staking');
+        const injector = await web3FromAddress(fromRef.current);
         const unsub = await txRef.current.signAndSend(
           fromRef.current,
           { signer: injector.signer },
@@ -207,6 +207,7 @@ export const useSubmitExtrinsic = ({
           }
         );
       } catch (e) {
+        console.error(e);
         onError();
       }
     }
