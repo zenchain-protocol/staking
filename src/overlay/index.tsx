@@ -9,7 +9,6 @@ import { Bio } from '../modals/Bio';
 import { Bond } from '../modals/Bond';
 import { StopNominations } from '../modals/StopNominations';
 import { ChooseLanguage } from '../modals/ChooseLanguage';
-import { ClaimReward } from '../modals/ClaimReward';
 import { GoToFeedback } from '../modals/GoToFeedback';
 import { ManageFastUnstake } from '../modals/ManageFastUnstake';
 import { Networks } from '../modals/Networks';
@@ -36,7 +35,6 @@ export const Overlays = () => {
         StopNominations,
         ChooseLanguage,
         ClaimPayouts,
-        ClaimReward,
         Accounts,
         GoToFeedback,
         ManageFastUnstake,
