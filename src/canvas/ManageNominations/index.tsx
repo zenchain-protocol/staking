@@ -25,6 +25,8 @@ import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { useAccount } from 'wagmi';
 
+import { Staking } from '../../model/transactions/nativeStaking.ts';
+
 export const ManageNominations = () => {
   const { t } = useTranslation('library');
   const {
@@ -33,7 +35,7 @@ export const ManageNominations = () => {
     config: { options },
   } = useOverlay().canvas;
   const { openHelp } = useHelp();
-  const { consts, api } = useApi();
+  const { consts } = useApi();
   const { getBondedAccount } = useBonded();
   const activeAccount = useAccount();
   const { openPromptWith, closePrompt } = usePrompt();
@@ -85,17 +87,16 @@ export const ManageNominations = () => {
 
   // Tx to submit.
   const getTx = () => {
-    const tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (!valid) {
+      return null;
     }
 
     // Note: `targets` structure differs between staking and pools.
-    const targetsToSubmit = newNominations.nominations.map((nominee) => ({
-      Id: nominee.address,
-    }));
+    const targetsToSubmit = newNominations.nominations.map(
+      (nominee) => nominee.address
+    );
 
-    return api.tx.staking.nominate(targetsToSubmit);
+    return Staking.nominate(targetsToSubmit);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

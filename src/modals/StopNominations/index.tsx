@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { useBonded } from 'contexts/Bonded';
 import { Warning } from 'library/Form/Warning';
 import { useSignerWarnings } from 'hooks/useSignerWarnings';
@@ -17,10 +16,10 @@ import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ModalSeparator } from 'kits/Overlay/structure/ModalSeparator';
 import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const StopNominations = () => {
   const { t } = useTranslation('modals');
-  const { api } = useApi();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { getNominations } = useBalances();
@@ -51,14 +50,10 @@ export const StopNominations = () => {
 
   // tx to submit
   const getTx = () => {
-    let tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (valid && isStaking) {
+      return Staking.chill();
     }
-    if (isStaking) {
-      tx = api.tx.staking.chill();
-    }
-    return tx;
+    return null;
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

@@ -3,18 +3,15 @@
 
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
-import { useApi } from 'contexts/Api';
 import { useTransferOptions } from 'contexts/TransferOptions';
-import type { BondFor } from 'types';
-import { useAccount } from 'wagmi';
+import { useAccount, usePublicClient } from 'wagmi';
+import { estimateTxFee } from '../../model/transactions';
+import type { PublicClient } from 'viem';
+import { Staking } from '../../model/transactions/nativeStaking.ts';
 
-interface Props {
-  bondFor: BondFor;
-}
-
-export const useBondGreatestFee = ({ bondFor }: Props) => {
-  const { api } = useApi();
+export const useBondGreatestFee = () => {
   const activeAccount = useAccount();
+  const publicClient = usePublicClient();
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const transferOptions = useMemo(
     () => getTransferOptions(activeAccount.address),
@@ -43,20 +40,12 @@ export const useBondGreatestFee = ({ bondFor }: Props) => {
       0
     ).toString();
 
-    let tx = null;
-    if (!api) {
-      return new BigNumber(0);
-    }
+    const fee = await estimateTxFee(
+      publicClient as PublicClient,
+      Staking.bondExtra(bond)
+    );
 
-    if (bondFor === 'nominator') {
-      tx = api.tx.staking.bondExtra(bond);
-    }
-
-    if (tx) {
-      const { partialFee } = await tx.paymentInfo(activeAccount.address || '');
-      return new BigNumber(partialFee.toString());
-    }
-    return new BigNumber(0);
+    return new BigNumber(fee?.toString() ?? '0');
   };
 
   return largestTxFee;

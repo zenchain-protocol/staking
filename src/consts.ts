@@ -8,6 +8,10 @@ import { stringToU8a } from '@polkadot/util';
  */
 export const DappName = 'Zenchain Staking Dashboard';
 export const PolkadotUrl = 'https://polkadot.network/features/staking/';
+export const STAKING_ADDRESS = '0x000000000000000000000000000000000000800';
+export const FAST_UNSTAKE_ADDRESS = '0x000000000000000000000000000000000000801';
+// TODO: deploy multicall3 contract
+export const MULTICALL3_ADDRESS = '0x';
 
 /*
  * Byte Helpers

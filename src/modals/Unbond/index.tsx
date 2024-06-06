@@ -25,6 +25,7 @@ import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
 import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const Unbond = () => {
   const { t } = useTranslation('modals');
@@ -44,7 +45,7 @@ export const Unbond = () => {
     setModalResize,
     config: { options },
   } = useOverlay().modal;
-  const { api, consts } = useApi();
+  const { consts } = useApi();
 
   const { bondFor } = options;
   const isStaking = bondFor === 'nominator';
@@ -86,18 +87,17 @@ export const Unbond = () => {
 
   // tx to submit
   const getTx = () => {
-    let tx = null;
-    if (!api || !activeAccount.address) {
-      return tx;
+    if (!activeAccount.address) {
+      return null;
     }
 
     const bondToSubmit = unitToPlanck(!bondValid ? '0' : bond.bond, units);
     const bondAsString = bondToSubmit.isNaN() ? '0' : bondToSubmit.toString();
 
     if (isStaking) {
-      tx = api.tx.staking.unbond(bondAsString);
+      return Staking.unbond(bondAsString);
     }
-    return tx;
+    return null;
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApi } from 'contexts/Api';
 import { useTxMeta } from 'contexts/TxMeta';
-import type { AnyApi, AnyJson } from 'types';
+import type { AnyApi } from 'types';
 import { useBuildPayload } from '../useBuildPayload';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
@@ -30,8 +30,6 @@ export const useSubmitExtrinsic = ({
     setTxFees,
     setSender,
     getTxPayload,
-    getTxSignature,
-    setTxSignature,
     resetTxPayloads,
     incrementPayloadUid,
   } = useTxMeta();
@@ -125,7 +123,6 @@ export const useSubmitExtrinsic = ({
 
     const resetTx = () => {
       resetTxPayloads();
-      setTxSignature(null);
       setSubmitting(false);
     };
 
@@ -152,64 +149,33 @@ export const useSubmitExtrinsic = ({
     // pre-submission state update
     setSubmitting(true);
 
-    const txPayload: AnyJson = getTxPayload();
-    const txSignature: AnyJson = getTxSignature();
-
-    // handle signed transaction.
-    if (getTxSignature()) {
-      try {
-        txRef.current.addSignature(fromRef.current, txSignature, txPayload);
-
-        const unsub = await txRef.current.send(
-          ({ status, events = [] }: AnyApi) => {
-            if (!didTxReset.current) {
-              didTxReset.current = true;
-              resetTx();
-            }
-
-            handleStatus(status);
-            if (status.isFinalized) {
-              events.forEach(({ event: { method } }: AnyApi) => {
-                onFinalizedEvent(method);
-                if (unsubEvents?.includes(method)) {
-                  unsub();
-                }
-              });
-            }
+    // handle unsigned transaction.
+    try {
+      await web3Enable('Zenchain Staking');
+      const injector = await web3FromAddress(fromRef.current);
+      const unsub = await txRef.current.signAndSend(
+        fromRef.current,
+        { signer: injector.signer },
+        ({ status, events = [] }: AnyApi) => {
+          if (!didTxReset.current) {
+            didTxReset.current = true;
+            resetTx();
           }
-        );
-      } catch (e) {
-        onError();
-      }
-    } else {
-      // handle unsigned transaction.
-      try {
-        await web3Enable('Zenchain Staking');
-        const injector = await web3FromAddress(fromRef.current);
-        const unsub = await txRef.current.signAndSend(
-          fromRef.current,
-          { signer: injector.signer },
-          ({ status, events = [] }: AnyApi) => {
-            if (!didTxReset.current) {
-              didTxReset.current = true;
-              resetTx();
-            }
 
-            handleStatus(status);
-            if (status.isFinalized) {
-              events.forEach(({ event: { method } }: AnyApi) => {
-                onFinalizedEvent(method);
-                if (unsubEvents?.includes(method)) {
-                  unsub();
-                }
-              });
-            }
+          handleStatus(status);
+          if (status.isFinalized) {
+            events.forEach(({ event: { method } }: AnyApi) => {
+              onFinalizedEvent(method);
+              if (unsubEvents?.includes(method)) {
+                unsub();
+              }
+            });
           }
-        );
-      } catch (e) {
-        console.error(e);
-        onError();
-      }
+        }
+      );
+    } catch (e) {
+      console.error(e);
+      onError();
     }
   };
 

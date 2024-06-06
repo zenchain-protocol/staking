@@ -18,6 +18,7 @@ import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const Bond = () => {
   const { t } = useTranslation('modals');
@@ -49,7 +50,7 @@ export const Bond = () => {
     units
   );
 
-  const largestTxFee = useBondGreatestFee({ bondFor });
+  const largestTxFee = useBondGreatestFee();
 
   // local bond value.
   const [bond, setBond] = useState<{ bond: string }>({
@@ -86,11 +87,6 @@ export const Bond = () => {
 
   // determine whether this is a pool or staking transaction.
   const determineTx = (bondToSubmit: BigNumber) => {
-    let tx = null;
-    if (!api) {
-      return tx;
-    }
-
     const bondAsString = !bondValid
       ? '0'
       : bondToSubmit.isNaN()
@@ -98,9 +94,9 @@ export const Bond = () => {
         : bondToSubmit.toString();
 
     if (isStaking) {
-      tx = api.tx.staking.bondExtra(bondAsString);
+      return Staking.bondExtra(bondAsString);
     }
-    return tx;
+    return null;
   };
 
   // the actual bond tx to submit

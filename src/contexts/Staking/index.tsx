@@ -181,15 +181,6 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
     return address !== activeAccount.address && activeAccount.address !== null;
   };
 
-  // Helper function to determine whether the controller account has been imported.
-  const getControllerNotImported = (address: MaybeAddress) => {
-    if (address === null || !activeAccount.address) {
-      return false;
-    }
-    // check if controller is imported
-    return !connectAccounts.find((a) => a === address);
-  };
-
   // Helper function to determine whether the active account.
   const hasController = () => getBondedAccount(activeAccount.address) !== null;
 
@@ -295,7 +286,6 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
       value={{
         fetchEraStakers,
         getNominationsStatusFromTargets,
-        getControllerNotImported,
         addressDifferentToStash,
         isBonding,
         isNominating,

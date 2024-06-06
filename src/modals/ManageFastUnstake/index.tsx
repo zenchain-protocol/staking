@@ -24,10 +24,11 @@ import { ActionItem } from 'library/ActionItem';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
 import { useAccount } from 'wagmi';
 
+import { FastUnstake } from '../../model/transactions/nativeFastUnstake.ts';
+
 export const ManageFastUnstake = () => {
   const { t } = useTranslation('modals');
   const {
-    api,
     consts: { bondDuration, fastUnstakeDeposit },
     networkMetrics: { fastUnstakeErasToCheckPerBlock },
     activeEra,
@@ -82,16 +83,14 @@ export const ManageFastUnstake = () => {
 
   // tx to submit
   const getTx = () => {
-    let tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (!valid) {
+      return null;
     }
     if (!isFastUnstaking) {
-      tx = api.tx.fastUnstake.registerFastUnstake();
+      return FastUnstake.registerFastUnstake();
     } else {
-      tx = api.tx.fastUnstake.deregister();
+      return FastUnstake.deregister();
     }
-    return tx;
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

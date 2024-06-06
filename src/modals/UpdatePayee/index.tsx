@@ -4,7 +4,6 @@
 import { isValidAddress } from '@w3ux/utils';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { useBonded } from 'contexts/Bonded';
 import type { PayeeConfig, PayeeOptions } from 'contexts/Setup/types';
 import { Warning } from 'library/Form/Warning';
@@ -23,10 +22,10 @@ import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const UpdatePayee = () => {
   const { t } = useTranslation('modals');
-  const { api } = useApi();
   const { getPayee } = useBalances();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
@@ -72,11 +71,6 @@ export const UpdatePayee = () => {
 
   // Tx to submit.
   const getTx = () => {
-    let tx = null;
-
-    if (!api) {
-      return tx;
-    }
     const payeeToSubmit = !isComplete()
       ? 'Staked'
       : selected.destination === 'Account'
@@ -84,9 +78,7 @@ export const UpdatePayee = () => {
             Account: selected.account,
           }
         : selected.destination;
-
-    tx = api.tx.staking.setPayee(payeeToSubmit);
-    return tx;
+    return Staking.setPayee(payeeToSubmit === 'Staked');
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

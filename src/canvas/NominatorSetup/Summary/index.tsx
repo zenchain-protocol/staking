@@ -7,7 +7,6 @@ import { ellipsisFn, unitToPlanck } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { useSetup } from 'contexts/Setup';
-import { useBatchCall } from 'hooks/useBatchCall';
 import { usePayeeConfig } from 'hooks/usePayeeConfig';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
 import { Header } from 'library/SetupSteps/Header';
@@ -15,18 +14,16 @@ import { MotionContainer } from 'library/SetupSteps/MotionContainer';
 import type { SetupStepProps } from 'library/SetupSteps/types';
 import { SubmitTx } from 'library/SubmitTx';
 import { useNetwork } from 'contexts/Network';
-import { useApi } from 'contexts/Api';
 import { SummaryWrapper } from './Wrapper';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useAccount } from 'wagmi';
+import { createBatchCall, Staking } from '../../../model/transactions';
 
 export const Summary = ({ section }: SetupStepProps) => {
   const { t } = useTranslation('pages');
-  const { api } = useApi();
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { newBatchCall } = useBatchCall();
   const { getPayeeItems } = usePayeeConfig();
   const { closeCanvas } = useOverlay().canvas;
   const activeAccount = useAccount();
@@ -37,14 +34,12 @@ export const Summary = ({ section }: SetupStepProps) => {
   const { bond, nominations, payee } = progress;
 
   const getTxs = () => {
-    if (!activeAccount.address || !api) {
+    if (!activeAccount.address) {
       return null;
     }
 
     const targetsToSubmit = nominations.map(
-      ({ address }: { address: string }) => ({
-        Id: address,
-      })
+      ({ address }: { address: string }) => address
     );
 
     const payeeToSubmit =
@@ -58,10 +53,10 @@ export const Summary = ({ section }: SetupStepProps) => {
     const bondAsString = bondToSubmit.isNaN() ? '0' : bondToSubmit.toString();
 
     const txs = [
-      api.tx.staking.bond(bondAsString, payeeToSubmit),
-      api.tx.staking.nominate(targetsToSubmit),
+      Staking.bond(bondAsString, payeeToSubmit === 'Staked'),
+      Staking.nominate(targetsToSubmit),
     ];
-    return newBatchCall(txs);
+    return createBatchCall(txs);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({

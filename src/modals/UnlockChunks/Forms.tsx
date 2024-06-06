@@ -22,6 +22,7 @@ import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
 import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const Forms = forwardRef(
   (
@@ -29,7 +30,7 @@ export const Forms = forwardRef(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     const { t } = useTranslation('modals');
-    const { api, consts } = useApi();
+    const { consts } = useApi();
     const {
       networkData: { units, unit },
     } = useNetwork();
@@ -55,14 +56,14 @@ export const Forms = forwardRef(
     // tx to submit
     const getTx = () => {
       let tx = null;
-      if (!valid || !api || !unlock) {
+      if (!valid || !unlock) {
         return tx;
       }
       // rebond is only available when staking directly.
       if (task === 'rebond' && isStaking) {
-        tx = api.tx.staking.rebond(unlock.value.toNumber() || 0);
+        tx = Staking.rebond(unlock.value.toString());
       } else if (task === 'withdraw' && isStaking) {
-        tx = api.tx.staking.withdrawUnbonded(historyDepth.toString());
+        tx = Staking.withdrawUnbonded(historyDepth.toNumber());
       }
       return tx;
     };
