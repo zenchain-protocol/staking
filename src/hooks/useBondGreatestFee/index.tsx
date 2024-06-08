@@ -5,9 +5,8 @@ import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useAccount, usePublicClient } from 'wagmi';
-import { estimateTxFee } from '../../model/transactions';
+import { estimateTxFee, Staking } from '../../model/transactions';
 import type { PublicClient } from 'viem';
-import { Staking } from '../../model/transactions/nativeStaking.ts';
 
 export const useBondGreatestFee = () => {
   const activeAccount = useAccount();

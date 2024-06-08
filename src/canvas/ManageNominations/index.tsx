@@ -25,7 +25,7 @@ import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { useAccount } from 'wagmi';
 
-import { Staking } from '../../model/transactions/nativeStaking.ts';
+import { Staking } from '../../model/transactions';
 
 export const ManageNominations = () => {
   const { t } = useTranslation('library');

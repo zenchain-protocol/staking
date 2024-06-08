@@ -4,14 +4,13 @@
 import BigNumber from 'bignumber.js';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { useTxMeta } from 'contexts/TxMeta';
-import type { AnyApi } from 'types';
-import { useBuildPayload } from '../useBuildPayload';
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
-import { useAccount } from 'wagmi';
-import { web3Enable, web3FromAddress } from '@polkadot/extension-dapp';
+import { useAccount, usePublicClient, useSendTransaction } from 'wagmi';
+import type { TxData } from '../../model/transactions';
+import { estimateTxFee } from '../../model/transactions';
+import type { PublicClient } from 'viem';
 
 export const useSubmitExtrinsic = ({
   tx,
@@ -21,21 +20,14 @@ export const useSubmitExtrinsic = ({
   callbackInBlock,
 }: UseSubmitExtrinsicProps): UseSubmitExtrinsic => {
   const { t } = useTranslation('library');
-  const { api } = useApi();
-  const { buildPayload } = useBuildPayload();
-  const { addPendingNonce, removePendingNonce } = useTxMeta();
   const activeAccount = useAccount();
-  const {
-    txFees,
-    setTxFees,
-    setSender,
-    getTxPayload,
-    resetTxPayloads,
-    incrementPayloadUid,
-  } = useTxMeta();
+  const publicClient = usePublicClient() as PublicClient;
+  const { sendTransactionAsync } = useSendTransaction();
+  const { txFees, setTxFees, setSender, resetTxPayloads, incrementPayloadUid } =
+    useTxMeta();
 
   // Store given tx as a ref.
-  const txRef = useRef<AnyApi>(tx);
+  const txRef = useRef<TxData>(tx);
 
   // Store given submit address as a ref.
   const fromRef = useRef<string>(from || '');
@@ -55,18 +47,18 @@ export const useSubmitExtrinsic = ({
       return;
     }
     // get payment info
-    const { partialFee } = await txRef.current.paymentInfo(fromRef.current);
-    const partialFeeBn = new BigNumber(partialFee.toString());
+    const feeEstimate = await estimateTxFee(publicClient, txRef.current);
+    const feeEstimateBN = new BigNumber(feeEstimate?.toString() ?? '0');
 
     // give tx fees to global useTxMeta context
-    if (partialFeeBn.toString() !== txFees.toString()) {
-      setTxFees(partialFeeBn);
+    if (feeEstimateBN.toString() !== txFees.toString()) {
+      setTxFees(feeEstimateBN);
     }
   };
 
   // Extrinsic submission handler.
   const onSubmit = async () => {
-    if (submitting || !shouldSubmit || !api) {
+    if (submitting || !shouldSubmit) {
       return;
     }
 
@@ -78,12 +70,7 @@ export const useSubmitExtrinsic = ({
       throw new Error(`${t('walletNotFound')}`);
     }
 
-    const nonce = (
-      await api.rpc.system.accountNextIndex(fromRef.current)
-    ).toHuman();
-
     const onReady = () => {
-      addPendingNonce(nonce);
       NotificationsController.emit({
         title: t('pending'),
         subtitle: t('transactionInitiated'),
@@ -95,29 +82,12 @@ export const useSubmitExtrinsic = ({
 
     const onInBlock = () => {
       setSubmitting(false);
-      removePendingNonce(nonce);
       NotificationsController.emit({
         title: t('inBlock'),
         subtitle: t('transactionInBlock'),
       });
       if (callbackInBlock && typeof callbackInBlock === 'function') {
         callbackInBlock();
-      }
-    };
-
-    const onFinalizedEvent = (method: string) => {
-      if (method === 'ExtrinsicSuccess') {
-        NotificationsController.emit({
-          title: t('finalized'),
-          subtitle: t('transactionSuccessful'),
-        });
-      } else if (method === 'ExtrinsicFailed') {
-        NotificationsController.emit({
-          title: t('failed'),
-          subtitle: t('errorWithTransaction'),
-        });
-        setSubmitting(false);
-        removePendingNonce(nonce);
       }
     };
 
@@ -128,55 +98,65 @@ export const useSubmitExtrinsic = ({
 
     const onError = () => {
       resetTx();
-      removePendingNonce(nonce);
       NotificationsController.emit({
         title: t('cancelled'),
         subtitle: t('transactionCancelled'),
       });
     };
 
-    const handleStatus = (status: AnyApi) => {
-      if (status.isReady) {
-        onReady();
-      }
-      if (status.isInBlock) {
-        onInBlock();
-      }
-    };
-
-    const unsubEvents = ['ExtrinsicSuccess', 'ExtrinsicFailed'];
-
     // pre-submission state update
     setSubmitting(true);
 
     // handle unsigned transaction.
+    let txHash: `0x${string}`;
     try {
-      await web3Enable('Zenchain Staking');
-      const injector = await web3FromAddress(fromRef.current);
-      const unsub = await txRef.current.signAndSend(
-        fromRef.current,
-        { signer: injector.signer },
-        ({ status, events = [] }: AnyApi) => {
-          if (!didTxReset.current) {
+      txHash = await sendTransactionAsync(
+        {
+          account: fromRef.current,
+          to: txRef.current.to,
+          data: txRef.current.calldata,
+        },
+        {
+          onSuccess: () => {
+            onReady();
             didTxReset.current = true;
             resetTx();
-          }
-
-          handleStatus(status);
-          if (status.isFinalized) {
-            events.forEach(({ event: { method } }: AnyApi) => {
-              onFinalizedEvent(method);
-              if (unsubEvents?.includes(method)) {
-                unsub();
-              }
-            });
-          }
+          },
+          onError,
         }
       );
     } catch (e) {
       console.error(e);
-      onError();
+      if (submitting) {
+        onError();
+      }
+      return;
     }
+
+    try {
+      await publicClient.waitForTransactionReceipt({
+        hash: txHash,
+        confirmations: 1,
+      });
+    } catch (e) {
+      console.error(e);
+      NotificationsController.emit({
+        title: t('failed'),
+        subtitle: t('errorWithTransaction'),
+      });
+      setSubmitting(false);
+      return;
+    }
+    onInBlock();
+
+    await publicClient.waitForTransactionReceipt({
+      hash: txHash,
+      confirmations: 6,
+    });
+    NotificationsController.emit({
+      title: t('finalized'),
+      subtitle: t('transactionSuccessful'),
+    });
   };
 
   // Refresh state upon `tx` updates.
@@ -189,8 +169,6 @@ export const useSubmitExtrinsic = ({
     setSender(fromRef.current);
     // re-calculate estimated tx fee.
     calculateEstimatedFee();
-    // rebuild tx payload.
-    buildPayload(txRef.current, fromRef.current, uid);
   }, [tx?.toString(), tx?.method?.args?.calls?.toString(), from]);
 
   return {

@@ -24,7 +24,7 @@ import { ActionItem } from 'library/ActionItem';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
 import { useAccount } from 'wagmi';
 
-import { FastUnstake } from '../../model/transactions/nativeFastUnstake.ts';
+import { FastUnstake } from '../../model/transactions';
 
 export const ManageFastUnstake = () => {
   const { t } = useTranslation('modals');
