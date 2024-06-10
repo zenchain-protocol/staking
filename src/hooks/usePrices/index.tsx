@@ -69,7 +69,7 @@ export const usePrices = () => {
     initiatePriceInterval();
   }, [network]);
 
-  // servie toggle
+  // service toggle
   useEffect(() => {
     if (plugins.includes('coingecko')) {
       if (priceHandle) {

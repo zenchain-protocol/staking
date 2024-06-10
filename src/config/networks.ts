@@ -19,7 +19,7 @@ export const NetworkList: Networks = {
     chainId: 8408,
     endpoints: {
       lightClient: 'zenchain_testnet',
-      defaultRpcEndpoint: 'onFinality',
+      defaultRpcEndpoint: 'localhost', // 'onFinality',
       wsRpcEndpoints: {
         localhost: 'ws://localhost:9944',
         onFinality: `wss://node-7199424157743243264.gx.onfinality.io/ws?apikey=${import.meta.env.VITE_ON_FINALITY_API_KEY}`,
@@ -68,7 +68,7 @@ export const NetworkList: Networks = {
     },
     api: {
       unit: 'ZCX',
-      priceTicker: 'unizen',
+      priceTicker: undefined, // 'unizen',
     },
     defaultFeeReserve: 0.05,
     maxExposurePageSize: new BigNumber(512),
