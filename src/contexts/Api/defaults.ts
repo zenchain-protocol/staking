@@ -68,5 +68,4 @@ export const defaultApiContext: APIContextInterface = {
   networkMetrics: defaultNetworkMetrics,
   activeEra: defaultActiveEra,
   stakingMetrics: defaultStakingMetrics,
-  isPagedRewardsActive: (e) => false,
 };

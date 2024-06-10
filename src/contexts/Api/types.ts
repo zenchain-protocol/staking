@@ -66,5 +66,4 @@ export interface APIContextInterface {
   networkMetrics: APINetworkMetrics;
   activeEra: APIActiveEra;
   stakingMetrics: APIStakingMetrics;
-  isPagedRewardsActive: (era: BigNumber) => boolean;
 }

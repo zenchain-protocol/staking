@@ -23,7 +23,6 @@ import type {
   EventApiStatus,
   SubstrateConnect,
 } from './types';
-import { WellKnownChain } from '@substrate/connect';
 import * as ZenchainTestnetChainSpec from 'config/chain-specs/zenchain_testnet.json';
 
 export class Api {
@@ -154,12 +153,7 @@ export class Api {
     const Sc = (await ScPromise.promise) as SubstrateConnect;
 
     // Get chain spec
-    const chainSpec =
-      this.network === 'polkadot'
-        ? WellKnownChain[
-            NetworkList[this.network].endpoints.lightClient as WellKnownChain
-          ]
-        : JSON.stringify(ZenchainTestnetChainSpec);
+    const chainSpec = JSON.stringify(ZenchainTestnetChainSpec);
 
     // Instantiate provider and connect
     this.#provider = new ScProvider(Sc, chainSpec);

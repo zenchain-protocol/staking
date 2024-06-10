@@ -124,7 +124,7 @@ export const BalanceChart = () => {
             zeroDecimals={2}
           />
           <span className="note">
-            {plugins.includes('binance_spot') ? (
+            {plugins.includes('coingecko') ? (
               <>&nbsp;{usdFormatter.format(freeFiat.toNumber())}</>
             ) : null}
           </span>

@@ -48,7 +48,7 @@ export const usePrices = () => {
   const setPriceInterval = async () => {
     priceHandle = setInterval(async () => {
       setPrices(await fetchUnitPrice());
-    }, 1000 * 30);
+    }, 1000 * 120);
   };
 
   // initial price subscribe
@@ -71,7 +71,7 @@ export const usePrices = () => {
 
   // servie toggle
   useEffect(() => {
-    if (plugins.includes('binance_spot')) {
+    if (plugins.includes('coingecko')) {
       if (priceHandle) {
         initiatePriceInterval();
       }

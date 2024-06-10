@@ -3,11 +3,7 @@
 
 import { setStateWithRef } from '@w3ux/utils';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import {
-  NetworkList,
-  NetworksWithPagedRewards,
-  PagedRewardsStartEra,
-} from 'config/networks';
+import { NetworkList } from 'config/networks';
 
 import type {
   APIActiveEra,
@@ -286,18 +282,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     }
   };
 
-  // Given an era, determine whether paged rewards are active.
-  const isPagedRewardsActive = (era: BigNumber): boolean => {
-    const networkStartEra = PagedRewardsStartEra[network];
-    if (!networkStartEra) {
-      return false;
-    }
-    return (
-      NetworksWithPagedRewards.includes(network) &&
-      era.isGreaterThanOrEqualTo(networkStartEra)
-    );
-  };
-
   const reInitialiseApi = async (type: ConnectionType) => {
     setApiStatus('disconnected');
 
@@ -391,7 +375,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
         networkMetrics,
         activeEra,
         stakingMetrics,
-        isPagedRewardsActive,
       }}
     >
       {children}
