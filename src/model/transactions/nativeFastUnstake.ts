@@ -1,6 +1,6 @@
 import type { TxData } from './index';
 import { encodeFunctionData } from 'viem';
-import * as NativeFastUnstake from '../../config/abis/NativeFastUnstake.json';
+import NativeFastUnstake from '../../config/abis/NativeFastUnstake.json';
 import { FAST_UNSTAKE_ADDRESS } from '../../consts';
 
 enum FastUnstakeMethods {

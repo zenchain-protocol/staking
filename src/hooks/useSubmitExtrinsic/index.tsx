@@ -9,7 +9,7 @@ import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { useAccount, usePublicClient, useSendTransaction } from 'wagmi';
 import type { TxData } from '../../model/transactions';
-import { estimateTxFee } from '../../model/transactions';
+import { estimateLegacyTxFee } from '../../model/transactions';
 import type { PublicClient } from 'viem';
 
 export const useSubmitExtrinsic = ({
@@ -27,7 +27,7 @@ export const useSubmitExtrinsic = ({
     useTxMeta();
 
   // Store given tx as a ref.
-  const txRef = useRef<TxData>(tx);
+  const txRef = useRef<TxData | null>(tx);
 
   // Store given submit address as a ref.
   const fromRef = useRef<string>(from || '');
@@ -47,7 +47,7 @@ export const useSubmitExtrinsic = ({
       return;
     }
     // get payment info
-    const feeEstimate = await estimateTxFee(publicClient, txRef.current);
+    const feeEstimate = await estimateLegacyTxFee(publicClient, txRef.current);
     const feeEstimateBN = new BigNumber(feeEstimate?.toString() ?? '0');
 
     // give tx fees to global useTxMeta context
@@ -58,7 +58,7 @@ export const useSubmitExtrinsic = ({
 
   // Extrinsic submission handler.
   const onSubmit = async () => {
-    if (submitting || !shouldSubmit) {
+    if (submitting || !shouldSubmit || !txRef.current) {
       return;
     }
 
@@ -110,11 +110,15 @@ export const useSubmitExtrinsic = ({
     // handle unsigned transaction.
     let txHash: `0x${string}`;
     try {
+      const { maxFeePerGas, maxPriorityFeePerGas } =
+        await publicClient.estimateFeesPerGas();
       txHash = await sendTransactionAsync(
         {
           account: fromRef.current,
           to: txRef.current.to,
           data: txRef.current.calldata,
+          maxFeePerGas,
+          maxPriorityFeePerGas,
         },
         {
           onSuccess: () => {
@@ -169,7 +173,7 @@ export const useSubmitExtrinsic = ({
     setSender(fromRef.current);
     // re-calculate estimated tx fee.
     calculateEstimatedFee();
-  }, [tx?.toString(), tx?.method?.args?.calls?.toString(), from]);
+  }, [tx, from]);
 
   return {
     uid,

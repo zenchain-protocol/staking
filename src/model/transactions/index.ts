@@ -9,7 +9,7 @@ export interface TxData {
   calldata: `0x${string}`;
 }
 
-export const estimateTxFee = async (
+export const estimateLegacyTxFee = async (
   client: PublicClient,
   txData: TxData
 ): Promise<bigint | undefined> => {
@@ -17,7 +17,7 @@ export const estimateTxFee = async (
     const gas = await client.estimateGas({
       account: client.account,
       to: txData.to,
-      data: txData.to,
+      data: txData.calldata,
     });
     const gasPrice = await client.getGasPrice();
     return gas * gasPrice;

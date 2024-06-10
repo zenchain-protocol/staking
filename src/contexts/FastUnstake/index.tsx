@@ -92,7 +92,9 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
 
     // cancel fast unstake check on network change or account change.
     for (const unsub of unsubs.current) {
-      unsub();
+      if (typeof unsub === 'function') {
+        unsub();
+      }
     }
 
     // Resubscribe to fast unstake queue.
@@ -103,7 +105,7 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
     if (isReady) {
       subscribeToFastUnstakeQueue();
     }
-  }, [isReady]);
+  }, [isReady, activeAccount.address]);
 
   // initiate fast unstake check for accounts that are nominating but not active.
   useEffectIgnoreInitial(() => {
@@ -159,7 +161,9 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       for (const unsub of unsubs.current) {
-        unsub();
+        if (typeof unsub === 'function') {
+          unsub();
+        }
       }
     };
   }, [
@@ -277,6 +281,9 @@ export const FastUnstakeProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const subscribeQueue = async (a: MaybeAddress) => {
+      if (!a) {
+        return undefined;
+      }
       const u = await api.query.fastUnstake.queue(a, (q: AnyApi) => {
         setStateWithRef(
           new BigNumber(rmCommas(q.unwrapOrDefault().toString())),

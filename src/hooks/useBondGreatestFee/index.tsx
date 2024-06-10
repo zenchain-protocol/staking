@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { useAccount, usePublicClient } from 'wagmi';
-import { estimateTxFee, Staking } from '../../model/transactions';
+import { estimateLegacyTxFee, Staking } from '../../model/transactions';
 import type { PublicClient } from 'viem';
 
 export const useBondGreatestFee = () => {
@@ -14,7 +14,7 @@ export const useBondGreatestFee = () => {
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const transferOptions = useMemo(
     () => getTransferOptions(activeAccount.address),
-    [activeAccount]
+    [activeAccount.address]
   );
   const { transferrableBalance } = transferOptions;
 
@@ -39,12 +39,12 @@ export const useBondGreatestFee = () => {
       0
     ).toString();
 
-    const fee = await estimateTxFee(
+    const fee = await estimateLegacyTxFee(
       publicClient as PublicClient,
       Staking.bondExtra(bond)
     );
 
-    return new BigNumber(fee?.toString() ?? '0');
+    return new BigNumber(fee?.toString() ?? 0);
   };
 
   return largestTxFee;

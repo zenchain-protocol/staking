@@ -1,6 +1,6 @@
 import type { TxData } from './index';
 import { encodeFunctionData } from 'viem';
-import * as NativeStaking from '../../config/abis/NativeStaking.json';
+import NativeStaking from '../../config/abis/NativeStaking.json';
 import { STAKING_ADDRESS } from '../../consts';
 
 enum StakingMethods {

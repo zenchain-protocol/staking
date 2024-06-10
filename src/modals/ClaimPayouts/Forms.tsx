@@ -86,7 +86,7 @@ export const Forms = forwardRef(
       if (!valid || !calls.length) {
         return null;
       }
-      return calls.length === 1 ? calls.pop() : createBatchCall(calls);
+      return calls.length === 1 ? calls.pop() ?? null : createBatchCall(calls);
     };
 
     const submitExtrinsic = useSubmitExtrinsic({

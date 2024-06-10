@@ -37,7 +37,6 @@ export const Bond = () => {
   } = useOverlay().modal;
 
   const { bondFor } = options;
-  const isStaking = bondFor === 'nominator';
   const { nominate, transferrableBalance } = getTransferOptions(
     activeAccount.address
   );
@@ -85,26 +84,18 @@ export const Bond = () => {
     );
   }
 
-  // determine whether this is a pool or staking transaction.
-  const determineTx = (bondToSubmit: BigNumber) => {
+  // the actual bond tx to submit
+  const getTx = (bondToSubmit: BigNumber) => {
+    if (!api || !activeAccount.address) {
+      return null;
+    }
     const bondAsString = !bondValid
       ? '0'
       : bondToSubmit.isNaN()
         ? '0'
         : bondToSubmit.toString();
 
-    if (isStaking) {
-      return Staking.bondExtra(bondAsString);
-    }
-    return null;
-  };
-
-  // the actual bond tx to submit
-  const getTx = (bondToSubmit: BigNumber) => {
-    if (!api || !activeAccount.address) {
-      return null;
-    }
-    return determineTx(bondToSubmit);
+    return Staking.bondExtra(bondAsString);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
