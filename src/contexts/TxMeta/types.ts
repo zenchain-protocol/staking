@@ -6,8 +6,7 @@ import type { AnyJson, MaybeAddress } from 'types';
 
 export interface TxMetaContextInterface {
   controllerSignerAvailable: (
-    a: MaybeAddress,
-    b: boolean
+    a: MaybeAddress
   ) => 'controller_not_imported' | 'read_only' | 'ok';
   txFees: BigNumber;
   notEnoughFunds: boolean;
@@ -21,8 +20,6 @@ export interface TxMetaContextInterface {
   getTxPayload: () => AnyJson;
   setTxPayload: (s: AnyJson, u: number) => void;
   resetTxPayloads: () => void;
-  getTxSignature: () => AnyJson;
-  setTxSignature: (s: AnyJson) => void;
   addPendingNonce: (nonce: string) => void;
   removePendingNonce: (nonce: string) => void;
   pendingNonces: string[];

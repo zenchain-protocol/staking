@@ -5,7 +5,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { PageCategories, PagesConfig } from 'config/pages';
-import { PolkadotUrl } from 'consts';
+import { ZenchainUrl } from 'consts';
 import { useBonded } from 'contexts/Bonded';
 import { useSetup } from 'contexts/Setup';
 import type { SetupContextInterface } from 'contexts/Setup/types';
@@ -14,13 +14,11 @@ import { useUi } from 'contexts/UI';
 import type { UIContextInterface } from 'contexts/UI/types';
 import type { AnyJson, PageCategory, PageItem, PagesConfigItems } from 'types';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { Heading } from './Heading/Heading';
 import { Primary } from './Primary';
 import { LogoWrapper } from './Wrapper';
-import { useBalances } from 'contexts/Balances';
 import { useSyncing } from 'hooks/useSyncing';
+import { useAccount } from 'wagmi';
 
 export const Main = () => {
   const { t, i18n } = useTranslation('base');
@@ -28,18 +26,12 @@ export const Main = () => {
   const { pathname } = useLocation();
   const { networkData } = useNetwork();
   const { getBondedAccount } = useBonded();
-  const { accounts } = useImportedAccounts();
-  const { getPoolMembership } = useBalances();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { inSetup: inNominatorSetup, addressDifferentToStash } = useStaking();
-  const {
-    getPoolSetupPercent,
-    getNominatorSetupPercent,
-  }: SetupContextInterface = useSetup();
+  const { getNominatorSetupPercent }: SetupContextInterface = useSetup();
   const { sideMenuMinimised }: UIContextInterface = useUi();
 
-  const membership = getPoolMembership(activeAccount);
-  const controller = getBondedAccount(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
   const controllerDifferentToStash = addressDifferentToStash(controller);
 
   const [pageConfig, setPageConfig] = useState<AnyJson>({
@@ -48,7 +40,7 @@ export const Main = () => {
   });
 
   useEffect(() => {
-    if (!accounts.length) {
+    if (!activeAccount.address) {
       return;
     }
 
@@ -89,18 +81,6 @@ export const Main = () => {
         }
       }
 
-      if (uri === `${import.meta.env.BASE_URL}pools`) {
-        // configure Pools action
-        const inPool = membership;
-
-        if (inPool) {
-          pages[i].action = {
-            type: 'text',
-            status: 'success',
-            text: t('active'),
-          };
-        }
-      }
       i++;
     }
 
@@ -110,14 +90,11 @@ export const Main = () => {
     });
   }, [
     networkData,
-    activeAccount,
-    accounts,
+    activeAccount.address,
     controllerDifferentToStash,
     syncing,
-    membership,
     inNominatorSetup(),
-    getNominatorSetupPercent(activeAccount),
-    getPoolSetupPercent(activeAccount),
+    getNominatorSetupPercent(activeAccount.address),
     i18n.resolvedLanguage,
   ]);
 
@@ -128,7 +105,7 @@ export const Main = () => {
     <>
       <LogoWrapper
         $minimised={sideMenuMinimised}
-        onClick={() => window.open(PolkadotUrl, '_blank')}
+        onClick={() => window.open(ZenchainUrl, '_blank')}
       >
         {sideMenuMinimised ? (
           <networkData.brand.icon

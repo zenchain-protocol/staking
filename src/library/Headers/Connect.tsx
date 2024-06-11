@@ -4,19 +4,20 @@
 import { faPlug, faWallet } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { ConnectedAccount, HeadingWrapper } from './Wrappers';
 import { ButtonText } from 'kits/Buttons/ButtonText';
+import { useConnections } from 'wagmi';
 
 export const Connect = () => {
   const { t } = useTranslation('library');
   const { openModal } = useOverlay().modal;
-  const { accounts } = useImportedAccounts();
+  const connections = useConnections();
+  const connectedAccounts = connections.flatMap((conn) => conn.accounts);
 
   return (
     <HeadingWrapper>
       <ConnectedAccount>
-        {accounts.length ? (
+        {connectedAccounts.length ? (
           <>
             <ButtonText
               text={t('accounts')}
@@ -43,7 +44,9 @@ export const Connect = () => {
             iconRight={faPlug}
             iconTransform="grow-1"
             onClick={() => {
-              openModal({ key: accounts.length ? 'Accounts' : 'Connect' });
+              openModal({
+                key: connectedAccounts.length ? 'Accounts' : 'Connect',
+              });
             }}
             style={{ color: 'white', fontSize: '1.05rem' }}
           />

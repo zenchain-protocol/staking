@@ -9,11 +9,11 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useNetwork } from 'contexts/Network';
 import { AccountInputWrapper } from './Wrapper';
 import type { AccountInputProps } from './types';
 import { ButtonSecondary } from 'kits/Buttons/ButtonSecondary';
+import { useConnections } from 'wagmi';
 
 export const AccountInput = ({
   successCallback,
@@ -32,7 +32,8 @@ export const AccountInput = ({
   const {
     networkData: { ss58 },
   } = useNetwork();
-  const { accounts } = useImportedAccounts();
+  const connections = useConnections();
+  const connectedAccounts = connections.flatMap((conn) => conn.accounts);
   const { setModalResize } = useOverlay().modal;
 
   // store current input value
@@ -66,8 +67,8 @@ export const AccountInput = ({
       return;
     }
     // check address already imported
-    const alreadyImported = accounts.find(
-      (a) => a.address.toUpperCase() === newValue.toUpperCase()
+    const alreadyImported = connectedAccounts.find(
+      (a) => a.toUpperCase() === newValue.toUpperCase()
     );
     if (alreadyImported !== undefined && disallowAlreadyImported) {
       setValid('already_imported');

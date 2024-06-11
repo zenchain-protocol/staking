@@ -1,7 +1,6 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { u8aToString, u8aUnwrapBytes } from '@polkadot/util';
 import { useTranslation } from 'react-i18next';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
 import type { AnyFunction, AnyJson } from 'types';
@@ -14,7 +13,6 @@ export const useValidatorFilters = () => {
     sessionValidators,
     sessionParaValidators,
     validatorIdentities,
-    validatorSupers,
     validatorEraPointsHistory,
   } = useValidators();
 
@@ -24,19 +22,15 @@ export const useValidatorFilters = () => {
    */
   const filterMissingIdentity = (list: AnyFilter) => {
     // Return lsit early if identity sync has not completed.
-    if (
-      !Object.values(validatorIdentities).length ||
-      !Object.values(validatorSupers).length
-    ) {
+    if (!Object.values(validatorIdentities).length) {
       return list;
     }
     const filteredList: AnyFilter = [];
     for (const validator of list) {
       const identityExists = validatorIdentities[validator.address] ?? false;
-      const superExists = validatorSupers[validator.address] ?? false;
 
-      // Validator included if identity or super identity has been set.
-      if (!!identityExists || !!superExists) {
+      // Validator included if identity has been set.
+      if (identityExists) {
         filteredList.push(validator);
         continue;
       }
@@ -200,40 +194,21 @@ export const useValidatorFilters = () => {
    */
   const applySearch = (list: AnyFilter, searchTerm: string) => {
     // If we cannot derive data, fallback to include validator in filtered list.
-    if (
-      !searchTerm ||
-      !Object.values(validatorIdentities).length ||
-      !Object.values(validatorSupers).length
-    ) {
+    if (!searchTerm || !Object.values(validatorIdentities).length) {
       return list;
     }
 
+    const searchTermLowerCase = searchTerm.toLowerCase();
     const filteredList: AnyFilter = [];
     for (const validator of list) {
-      const identity = validatorIdentities[validator.address] ?? '';
-      const identityRaw = identity?.info?.display?.Raw ?? '';
-      const identityAsBytes = u8aToString(u8aUnwrapBytes(identityRaw));
-      const identitySearch = (
-        identityAsBytes === '' ? identityRaw : identityAsBytes
-      ).toLowerCase();
-
-      const superIdentity = validatorSupers[validator.address] ?? null;
-      const superIdentityRaw =
-        superIdentity?.identity?.info?.display?.Raw ?? '';
-      const superIdentityAsBytes = u8aToString(
-        u8aUnwrapBytes(superIdentityRaw)
-      );
-      const superIdentitySearch = (
-        superIdentityAsBytes === '' ? superIdentityRaw : superIdentityAsBytes
-      ).toLowerCase();
-
-      if (validator.address.toLowerCase().includes(searchTerm.toLowerCase())) {
+      // address search
+      if (validator.address.toLowerCase().includes(searchTermLowerCase)) {
         filteredList.push(validator);
       }
-      if (
-        identitySearch.includes(searchTerm.toLowerCase()) ||
-        superIdentitySearch.includes(searchTerm.toLowerCase())
-      ) {
+      // identity search
+      const identity = validatorIdentities[validator.address];
+      const identitySearch = identity?.ens.toLowerCase();
+      if (identitySearch.includes(searchTermLowerCase)) {
         filteredList.push(validator);
       }
     }

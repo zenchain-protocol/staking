@@ -27,13 +27,9 @@ export const MigrateProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('polkadot_exposures');
     localStorage.removeItem('polkadot_era_exposures');
 
-    localStorage.removeItem('kusama_validators');
-    localStorage.removeItem('kusama_exposures');
-    localStorage.removeItem('kusama_era_exposures');
-
-    localStorage.removeItem('westend_validators');
-    localStorage.removeItem('westend_exposures');
-    localStorage.removeItem('westend_era_exposures');
+    localStorage.removeItem('zenchain_testnet_validators');
+    localStorage.removeItem('zenchain_testnet_exposures');
+    localStorage.removeItem('zenchain_testnet_era_exposures');
 
     // Remove locale data.
     localStorage.removeItem('lng_resources');

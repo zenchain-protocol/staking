@@ -8,7 +8,6 @@ import { useTransferOptions } from 'contexts/TransferOptions';
 import { CardWrapper } from 'library/Card/Wrappers';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { ButtonRow } from 'kits/Structure/ButtonRow';
@@ -18,29 +17,24 @@ import { useErasToTimeLeft } from 'hooks/useErasToTimeLeft';
 import { useApi } from 'contexts/Api';
 import { useTranslation } from 'react-i18next';
 import type { BondFor } from 'types';
-import { useActivePool } from 'contexts/Pools/ActivePool';
+import { useAccount } from 'wagmi';
 
 export const WithdrawPrompt = ({ bondFor }: { bondFor: BondFor }) => {
   const { t } = useTranslation('modals');
   const { mode } = useTheme();
   const { consts } = useApi();
-  const { activePool } = useActivePool();
   const { openModal } = useOverlay().modal;
   const { colors } = useNetwork().networkData;
 
   const { syncing } = useSyncing(['balances']);
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { erasToSeconds } = useErasToTimeLeft();
   const { getTransferOptions } = useTransferOptions();
-  const { state } = activePool?.bondedPool || {};
 
   const { bondDuration } = consts;
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
 
-  const totalUnlockChunks =
-    bondFor === 'nominator'
-      ? allTransferOptions.nominate.totalUnlockChunks
-      : allTransferOptions.pool.totalUnlockChunks;
+  const totalUnlockChunks = allTransferOptions.nominate.totalUnlockChunks;
 
   const bondDurationFormatted = timeleftAsString(
     t,
@@ -55,7 +49,6 @@ export const WithdrawPrompt = ({ bondFor }: { bondFor: BondFor }) => {
   return (
     /* NOTE: ClosurePrompts is a component that displays a prompt to the user when a pool is being
     destroyed. */
-    state !== 'Destroying' &&
     displayPrompt && (
       <PageRow>
         <CardWrapper style={{ border: `1px solid ${colors.secondary[mode]}` }}>

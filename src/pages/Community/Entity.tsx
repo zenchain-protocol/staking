@@ -25,6 +25,8 @@ export const Entity = () => {
   const { setActiveSection, activeItem } = useCommunitySections();
 
   const { name, validators: entityAllValidators } = activeItem;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const validators = entityAllValidators[network] ?? [];
 
   // include validators that exist in `erasStakers`

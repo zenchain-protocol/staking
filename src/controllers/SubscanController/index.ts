@@ -2,17 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type {
-  SubscanPoolClaim,
   SubscanData,
   SubscanPayout,
-  SubscanPoolMember,
   SubscanRequestBody,
   SubscanEraPoints,
 } from './types';
 import type { Locale } from 'date-fns';
 import { format, fromUnixTime, getUnixTime, subDays } from 'date-fns';
-import type { PoolMember } from 'contexts/Pools/PoolMembers/types';
-import { poolMembersPerPage } from 'library/List/defaults';
 
 export class SubscanController {
   // ------------------------------------------------------
@@ -25,8 +21,6 @@ export class SubscanController {
   // List of endpoints to be used for Subscan API calls.
   static ENDPOINTS = {
     eraStat: '/api/scan/staking/era_stat',
-    poolMembers: '/api/scan/nomination_pool/pool/members',
-    poolRewards: '/api/scan/nomination_pool/rewards',
     rewardSlash: '/api/v2/scan/account/reward_slash',
   };
 
@@ -41,9 +35,6 @@ export class SubscanController {
 
   // Subscan payout data, keyed by address.
   static payoutData: Record<string, SubscanData> = {};
-
-  // Subscan pool data, keyed by `<network>-<poolId>-<key1>-<key2>...`.
-  static poolData: Record<string, PoolMember[]> = {};
 
   // Subscan era points data, keyed by `<network>-<address>-<era>`.
   static eraPointsData: Record<string, SubscanEraPoints[]> = {};
@@ -66,24 +57,19 @@ export class SubscanController {
   // Handle fetching the various types of payout and set state in one render.
   static handleFetchPayouts = async (address: string) => {
     if (!this.payoutData[address]) {
-      const results = await Promise.all([
-        this.fetchNominatorPayouts(address),
-        this.fetchPoolClaims(address),
-      ]);
+      const results = await Promise.all([this.fetchNominatorPayouts(address)]);
       const { payouts, unclaimedPayouts } = results[0];
-      const poolClaims = results[1];
 
       // Persist results to class.
       this.payoutData[address] = {
         payouts,
         unclaimedPayouts,
-        poolClaims,
       };
 
       document.dispatchEvent(
         new CustomEvent('subscan-data-updated', {
           detail: {
-            keys: ['payouts', 'unclaimedPayouts', 'poolClaims'],
+            keys: ['payouts', 'unclaimedPayouts'],
           },
         })
       );
@@ -134,48 +120,6 @@ export class SubscanController {
     return { payouts, unclaimedPayouts };
   };
 
-  // Fetch pool claims from Subscan, ensuring no payouts have block_timestamp of 0.
-  static fetchPoolClaims = async (
-    address: string
-  ): Promise<SubscanPoolClaim[]> => {
-    const result = await this.makeRequest(this.ENDPOINTS.poolRewards, {
-      address,
-      row: 100,
-      page: 0,
-    });
-    if (!result?.list) {
-      return [];
-    }
-    // Remove claims with a `block_timestamp`.
-    const poolClaims = result.list.filter(
-      (l: SubscanPoolClaim) => l.block_timestamp !== 0
-    );
-    return poolClaims;
-  };
-
-  // Fetch a page of pool members from Subscan.
-  static fetchPoolMembers = async (
-    poolId: number,
-    page: number
-  ): Promise<PoolMember[]> => {
-    const result = await this.makeRequest(this.ENDPOINTS.poolMembers, {
-      pool_id: poolId,
-      row: poolMembersPerPage,
-      page: page - 1,
-    });
-    if (!result?.list) {
-      return [];
-    }
-    // Format list and return.
-    return result.list
-      .map((entry: SubscanPoolMember) => ({
-        who: entry.account_display.address,
-        poolId: entry.pool_id,
-      }))
-      .reverse()
-      .splice(0, result.list.length - 1);
-  };
-
   // Fetch a pool's era points from Subscan.
   static fetchEraPoints = async (
     address: string,
@@ -203,21 +147,6 @@ export class SubscanController {
     }
     // Removes last zero item and return.
     return list.reverse().splice(0, list.length - 1);
-  };
-
-  // Handle fetching pool members.
-  static handleFetchPoolMembers = async (poolId: number, page: number) => {
-    const dataKey = `${this.network}-${poolId}-${page}-members}`;
-    const currentValue = this.poolData[dataKey];
-
-    if (currentValue) {
-      return currentValue;
-    } else {
-      const result = await this.fetchPoolMembers(poolId, page);
-      this.poolData[dataKey] = result;
-
-      return result;
-    }
   };
 
   // Handle fetching era point history.

@@ -4,7 +4,6 @@
 import { isValidAddress } from '@w3ux/utils';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { useBonded } from 'contexts/Bonded';
 import type { PayeeConfig, PayeeOptions } from 'contexts/Setup/types';
 import { Warning } from 'library/Form/Warning';
@@ -19,24 +18,24 @@ import { SubmitTx } from 'library/SubmitTx';
 import type { MaybeAddress } from 'types';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
+import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const UpdatePayee = () => {
   const { t } = useTranslation('modals');
-  const { api } = useApi();
   const { getPayee } = useBalances();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { getPayeeItems } = usePayeeConfig();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const { setModalStatus, setModalResize } = useOverlay().modal;
 
-  const controller = getBondedAccount(activeAccount);
-  const payee = getPayee(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const payee = getPayee(activeAccount.address);
 
   const DefaultSelected: PayeeConfig = {
     destination: null,
@@ -72,11 +71,6 @@ export const UpdatePayee = () => {
 
   // Tx to submit.
   const getTx = () => {
-    let tx = null;
-
-    if (!api) {
-      return tx;
-    }
     const payeeToSubmit = !isComplete()
       ? 'Staked'
       : selected.destination === 'Account'
@@ -84,9 +78,7 @@ export const UpdatePayee = () => {
             Account: selected.account,
           }
         : selected.destination;
-
-    tx = api.tx.staking.setPayee(payeeToSubmit);
-    return tx;
+    return Staking.setPayee(payeeToSubmit === 'Staked');
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -101,7 +93,7 @@ export const UpdatePayee = () => {
   // Reset selected value on account change.
   useEffect(() => {
     setSelected(DefaultSelected);
-  }, [activeAccount]);
+  }, [activeAccount.address]);
 
   // Inject default value after component mount.
   useEffect(() => {
@@ -120,11 +112,7 @@ export const UpdatePayee = () => {
 
   useEffect(() => setModalResize(), [notEnoughFunds]);
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   return (
     <>

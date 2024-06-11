@@ -13,10 +13,10 @@ export const getAvailablePlugins = () => {
     true
   ) as Plugin[];
 
-  // If fiat is disabled, remove `binance_spot` service.
+  // If fiat is disabled, remove `coingecko` service.
   const DISABLE_FIAT = Number(import.meta.env.VITE_DISABLE_FIAT ?? 0);
-  if (DISABLE_FIAT && localPlugins.includes('binance_spot')) {
-    const index = localPlugins.indexOf('binance_spot');
+  if (DISABLE_FIAT && localPlugins.includes('coingecko')) {
+    const index = localPlugins.indexOf('coingecko');
     if (index !== -1) {
       localPlugins.splice(index, 1);
     }

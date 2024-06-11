@@ -16,7 +16,7 @@ export const ProvidersPrompt = () => {
   const { closePrompt } = usePrompt();
   const { rpcEndpoint, setRpcEndpoint } = useApi();
 
-  const rpcProviders = NetworkList[network].endpoints.rpcEndpoints;
+  const rpcProviders = NetworkList[network].endpoints.wsRpcEndpoints;
   return (
     <>
       <Title

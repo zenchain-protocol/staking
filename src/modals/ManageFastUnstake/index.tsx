@@ -18,16 +18,17 @@ import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
 import { ModalNotes } from 'kits/Overlay/structure/ModalNotes';
+import { useAccount } from 'wagmi';
+
+import { FastUnstake } from '../../model/transactions';
 
 export const ManageFastUnstake = () => {
   const { t } = useTranslation('modals');
   const {
-    api,
     consts: { bondDuration, fastUnstakeDeposit },
     networkMetrics: { fastUnstakeErasToCheckPerBlock },
     activeEra,
@@ -35,7 +36,7 @@ export const ManageFastUnstake = () => {
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { isFastUnstaking } = useUnstaking();
@@ -45,8 +46,8 @@ export const ManageFastUnstake = () => {
   const { isExposed, counterForQueue, queueDeposit, meta } = useFastUnstake();
 
   const { checked } = meta;
-  const controller = getBondedAccount(activeAccount);
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { nominate, transferrableBalance } = allTransferOptions;
   const { totalUnlockChunks } = nominate;
 
@@ -82,16 +83,14 @@ export const ManageFastUnstake = () => {
 
   // tx to submit
   const getTx = () => {
-    let tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (!valid) {
+      return null;
     }
     if (!isFastUnstaking) {
-      tx = api.tx.fastUnstake.registerFastUnstake();
+      return FastUnstake.registerFastUnstake();
     } else {
-      tx = api.tx.fastUnstake.deregister();
+      return FastUnstake.deregister();
     }
-    return tx;
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -104,11 +103,7 @@ export const ManageFastUnstake = () => {
   });
 
   // warnings
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   if (!isFastUnstaking) {
     if (!enoughForDeposit) {

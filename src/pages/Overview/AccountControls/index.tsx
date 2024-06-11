@@ -1,17 +1,16 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Item } from './Item';
 import { ActiveAccounsWrapper } from './Wrappers';
+import { useAccount } from 'wagmi';
 
 export const AccountControls = () => {
-  const { activeProxy, activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   return (
     <ActiveAccounsWrapper>
-      <Item address={activeAccount} />
-      {activeProxy && <Item address={activeAccount} delegate={activeProxy} />}
+      <Item address={activeAccount.address} />
     </ActiveAccounsWrapper>
   );
 };

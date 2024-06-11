@@ -1,54 +1,41 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { faChevronLeft, faLinkSlash } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { Fragment, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProxies } from 'contexts/Proxies';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { AccountButton } from './Account';
-import { Delegates } from './Delegates';
 import { AccountSeparator, AccountWrapper } from './Wrappers';
-import type {
-  AccountInPool,
-  AccountNominating,
-  AccountNominatingAndInPool,
-  AccountNotStaking,
-} from './types';
+import type { AccountNominating, AccountNotStaking } from './types';
 import { useActiveBalances } from 'hooks/useActiveBalances';
 import type { MaybeAddress } from 'types';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import BigNumber from 'bignumber.js';
 import { useApi } from 'contexts/Api';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
-import { ButtonText } from 'kits/Buttons/ButtonText';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalCustomHeader } from 'kits/Overlay/structure/ModalCustomHeader';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
 
 export const Accounts = () => {
   const { t } = useTranslation('modals');
   const {
     consts: { existentialDeposit },
   } = useApi();
-  const { getDelegates } = useProxies();
   const {
     replaceModal,
     status: modalStatus,
     setModalResize,
   } = useOverlay().modal;
-  const { accounts } = useImportedAccounts();
   const { getFeeReserve } = useTransferOptions();
-  const { activeAccount, setActiveAccount, setActiveProxy } =
-    useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Listen to balance updates for entire accounts list.
-  const { getLocks, getBalance, getEdReserved, getPoolMembership } =
-    useActiveBalances({
-      accounts: accounts.map(({ address }) => address),
-    });
+  const { getLocks, getBalance, getEdReserved } = useActiveBalances({
+    accounts: activeAccount.addresses ?? [],
+  });
 
   // Calculate transferrable balance of an address.
   const getTransferrableBalance = (address: MaybeAddress) => {
@@ -67,7 +54,7 @@ export const Accounts = () => {
 
   const stashes: string[] = [];
   // accumulate imported stash accounts
-  for (const { address } of accounts) {
+  for (const address of activeAccount.addresses ?? []) {
     const { locks } = getLocks(address);
 
     // account is a stash if they have an active `staking` lock
@@ -78,25 +65,11 @@ export const Accounts = () => {
 
   // construct account groupings
   const nominating: AccountNominating[] = [];
-  const inPool: AccountInPool[] = [];
-  const nominatingAndPool: AccountNominatingAndInPool[] = [];
   const notStaking: AccountNotStaking[] = [];
 
-  for (const { address } of accounts) {
+  for (const address of activeAccount.addresses ?? []) {
     let isNominating = false;
-    let isInPool = false;
     const isStash = stashes[stashes.indexOf(address)] ?? null;
-    const delegates = getDelegates(address);
-
-    // Inject transferrable balance into delegates list.
-    if (delegates?.delegates) {
-      delegates.delegates = delegates?.delegates.map((d) => ({
-        ...d,
-        transferrableBalance: getTransferrableBalance(d.delegate),
-      }));
-    }
-
-    const poolMember = getPoolMembership(address);
 
     // Check if nominating.
     if (
@@ -106,48 +79,15 @@ export const Accounts = () => {
       isNominating = true;
     }
 
-    // Check if in pool.
-    if (poolMember) {
-      if (!inPool.find((n) => n.address === address)) {
-        isInPool = true;
-      }
-    }
-
     // If not doing anything, add address to `notStaking`.
-    if (
-      !isStash &&
-      !poolMember &&
-      !notStaking.find((n) => n.address === address)
-    ) {
-      notStaking.push({ address, delegates });
-      continue;
-    }
-
-    // If both nominating and in pool, add to this list.
-    if (
-      isNominating &&
-      isInPool &&
-      poolMember &&
-      !nominatingAndPool.find((n) => n.address === address)
-    ) {
-      nominatingAndPool.push({
-        ...poolMember,
-        address,
-        stashImported: true,
-        delegates,
-      });
+    if (!isStash && !notStaking.find((n) => n.address === address)) {
+      notStaking.push({ address });
       continue;
     }
 
     // Nominating only.
-    if (isNominating && !isInPool) {
-      nominating.push({ address, stashImported: true, delegates });
-      continue;
-    }
-
-    // In pool only.
-    if (!isNominating && isInPool && poolMember) {
-      inPool.push({ ...poolMember, delegates });
+    if (isNominating) {
+      nominating.push({ address, stashImported: true });
     }
   }
 
@@ -157,11 +97,8 @@ export const Accounts = () => {
       setModalResize();
     }
   }, [
-    accounts,
-    activeAccount,
+    activeAccount.addresses,
     JSON.stringify(nominating),
-    JSON.stringify(inPool),
-    JSON.stringify(nominatingAndPool),
     JSON.stringify(notStaking),
   ]);
 
@@ -180,23 +117,8 @@ export const Accounts = () => {
             marginLeft
           />
         </div>
-        <div>
-          {activeAccount && (
-            <ButtonText
-              style={{
-                color: 'var(--accent-color-primary)',
-              }}
-              text={t('disconnect')}
-              iconRight={faLinkSlash}
-              onClick={() => {
-                setActiveAccount(null);
-                setActiveProxy(null);
-              }}
-            />
-          )}
-        </div>
       </ModalCustomHeader>
-      {!activeAccount && !accounts.length && (
+      {!activeAccount && (
         <AccountWrapper style={{ marginTop: '1.5rem' }}>
           <div>
             <div>
@@ -209,55 +131,16 @@ export const Accounts = () => {
         </AccountWrapper>
       )}
 
-      {nominatingAndPool.length ? (
-        <>
-          <AccountSeparator />
-          <ActionItem text={t('nominatingAndInPool')} />
-          {nominatingAndPool.map(({ address, delegates }, i) => (
-            <Fragment key={`acc_nominating_and_pool_${i}`}>
-              <AccountButton
-                transferrableBalance={getTransferrableBalance(address)}
-                address={address}
-              />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
-            </Fragment>
-          ))}
-        </>
-      ) : null}
-
       {nominating.length ? (
         <>
           <AccountSeparator />
           <ActionItem text={t('nominating')} />
-          {nominating.map(({ address, delegates }, i) => (
+          {nominating.map(({ address }, i) => (
             <Fragment key={`acc_nominating_${i}`}>
               <AccountButton
                 transferrableBalance={getTransferrableBalance(address)}
                 address={address}
               />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
-            </Fragment>
-          ))}
-        </>
-      ) : null}
-
-      {inPool.length ? (
-        <>
-          <AccountSeparator />
-          <ActionItem text={t('inPool')} />
-          {inPool.map(({ address, delegates }, i) => (
-            <Fragment key={`acc_in_pool_${i}`}>
-              <AccountButton
-                transferrableBalance={getTransferrableBalance(address)}
-                address={address}
-              />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
             </Fragment>
           ))}
         </>
@@ -267,15 +150,12 @@ export const Accounts = () => {
         <>
           <AccountSeparator />
           <ActionItem text={t('notStaking')} />
-          {notStaking.map(({ address, delegates }, i) => (
+          {notStaking.map(({ address }, i) => (
             <Fragment key={`acc_not_staking_${i}`}>
               <AccountButton
                 transferrableBalance={getTransferrableBalance(address)}
                 address={address}
               />
-              {address && (
-                <Delegates delegator={address} delegates={delegates} />
-              )}
             </Fragment>
           ))}
         </>

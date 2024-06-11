@@ -15,6 +15,7 @@ export const Wrapper = styled.div`
   align-items: center;
   align-content: center;
   padding: 0 1.25rem;
+  gap: 8px;
   transition: all var(--transition-duration);
   margin: 0.5rem 0;
   height: 4rem;

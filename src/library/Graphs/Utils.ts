@@ -8,12 +8,11 @@ import {
   differenceInDays,
   fromUnixTime,
   getUnixTime,
-  isSameDay,
   startOfDay,
   subDays,
 } from 'date-fns';
 import { MaxPayoutDays } from 'consts';
-import type { AnyApi, AnyJson, AnySubscan } from 'types';
+import type { AnyApi, AnySubscan } from 'types';
 import type { PayoutDayCursor } from './types';
 
 // Given payouts, calculate daily income and fill missing days with zero amounts.
@@ -178,7 +177,6 @@ export const formatRewardsForGraphs = (
   days: number,
   units: number,
   payouts: AnySubscan,
-  poolClaims: AnySubscan,
   unclaimedPayouts: AnySubscan
 ) => {
   // process nominator payouts.
@@ -193,21 +191,11 @@ export const formatRewardsForGraphs = (
     'nominate'
   );
 
-  // process pool claims.
-  const allPoolClaims = processPayouts(
-    poolClaims,
-    fromDate,
-    days,
-    units,
-    'pools'
-  );
-
   return {
     // reverse rewards: most recent last
     allPayouts,
     allUnclaimedPayouts,
-    allPoolClaims,
-    lastReward: getLatestReward(payouts, poolClaims),
+    lastReward: getLatestReward(payouts),
   };
 };
 
@@ -276,122 +264,20 @@ const getPreMaxDaysPayouts = (
       daysPassed(fromUnixTime(p.block_timestamp), fromDate) > days &&
       daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= days + avgDays
   );
-// Combine payouts and pool claims.
-//
-// combines payouts and pool claims into daily records. Removes the `event_id` field from records.
-export const combineRewards = (payouts: AnySubscan, poolClaims: AnySubscan) => {
-  // we first check if actual payouts exist, e.g. there are non-zero payout
-  // amounts present in either payouts or pool claims.
-  const poolClaimExists =
-    poolClaims.find((p: AnySubscan) => p.amount > 0) || null;
-  const payoutExists = payouts.find((p: AnySubscan) => p.amount > 0) || null;
-
-  // if no pool claims exist but payouts do, return payouts w.o. event_id
-  // also do this if there are no payouts period.
-  if (
-    (!poolClaimExists && payoutExists) ||
-    (!payoutExists && !poolClaimExists)
-  ) {
-    return payouts.map((p: AnySubscan) => ({
-      amount: p.amount,
-      block_timestamp: p.block_timestamp,
-    }));
-  }
-
-  // if no payouts exist but pool claims do, return pool claims w.o. event_id
-  if (!payoutExists && poolClaimExists) {
-    return poolClaims.map((p: AnySubscan) => ({
-      amount: p.amount,
-      block_timestamp: p.block_timestamp,
-    }));
-  }
-
-  // We now know pool claims *and* payouts exist.
-  //
-  // Now determine which dates to display.
-  let payoutDays: AnyJson[] = [];
-  // prefill `dates` with all pool claim and payout days
-  poolClaims.forEach((p: AnySubscan) => {
-    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.block_timestamp)));
-    if (!payoutDays.includes(dayStart)) {
-      payoutDays.push(dayStart);
-    }
-  });
-  payouts.forEach((p: AnySubscan) => {
-    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.block_timestamp)));
-    if (!payoutDays.includes(dayStart)) {
-      payoutDays.push(dayStart);
-    }
-  });
-
-  // sort payoutDays by `block_timestamp`;
-  payoutDays = payoutDays.sort((a: AnySubscan, b: AnySubscan) => a - b);
-
-  // Iterate payout days.
-  //
-  // Combine payouts into one unified `rewards` array.
-  const rewards: AnySubscan = [];
-
-  // loop pool claims and consume / combine payouts
-  payoutDays.forEach((d: AnySubscan) => {
-    let amount = 0;
-
-    // check payouts exist on this day
-    const payoutsThisDay = payouts.filter((p: AnySubscan) =>
-      isSameDay(fromUnixTime(p.block_timestamp), fromUnixTime(d))
-    );
-    // check pool claims exist on this day
-    const poolClaimsThisDay = poolClaims.filter((p: AnySubscan) =>
-      isSameDay(fromUnixTime(p.block_timestamp), fromUnixTime(d))
-    );
-    // add amounts
-    if (payoutsThisDay.concat(poolClaimsThisDay).length) {
-      for (const payout of payoutsThisDay) {
-        amount += payout.amount;
-      }
-    }
-    rewards.push({
-      amount,
-      block_timestamp: d,
-    });
-  });
-  return rewards;
-};
+// Map payouts claims, removing event_id.
+export const mapRewardsWithoutEventId = (payouts: AnySubscan) =>
+  payouts.map((p: AnySubscan) => ({
+    amount: p.amount,
+    block_timestamp: p.block_timestamp,
+  }));
 
 // Get latest reward.
 //
 // Gets the latest reward from pool claims and nominator payouts.
-export const getLatestReward = (
-  payouts: AnySubscan,
-  poolClaims: AnySubscan
-) => {
+export const getLatestReward = (payouts: AnySubscan) =>
   // get most recent payout
-  const payoutExists =
-    payouts.find((p: AnySubscan) => greaterThanZero(new BigNumber(p.amount))) ??
-    null;
-  const poolClaimExists =
-    poolClaims.find((p: AnySubscan) =>
-      greaterThanZero(new BigNumber(p.amount))
-    ) ?? null;
-
-  // calculate which payout was most recent
-  let lastReward = null;
-  if (!payoutExists || !poolClaimExists) {
-    if (payoutExists) {
-      lastReward = payoutExists;
-    }
-    if (poolClaimExists) {
-      lastReward = poolClaimExists;
-    }
-  } else {
-    // both `payoutExists` and `poolClaimExists` are present
-    lastReward =
-      payoutExists.block_timestamp > poolClaimExists.block_timestamp
-        ? payoutExists
-        : poolClaimExists;
-  }
-  return lastReward;
-};
+  payouts.find((p: AnySubscan) => greaterThanZero(new BigNumber(p.amount))) ??
+  null;
 
 // Fill in the days from the earliest payout day to `maxDays`.
 //

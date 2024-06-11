@@ -16,10 +16,9 @@ import { CardHeaderWrapper } from 'library/Card/Wrappers';
 import { usePrices } from 'hooks/usePrices';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 import { ButtonTertiary } from 'kits/Buttons/ButtonTertiary';
+import { useAccount } from 'wagmi';
 
 export const BalanceChart = () => {
   const { t } = useTranslation('pages');
@@ -33,26 +32,18 @@ export const BalanceChart = () => {
   const prices = usePrices();
   const { plugins } = usePlugins();
   const { openModal } = useOverlay().modal;
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getBalance, getLocks } = useBalances();
   const { syncing } = useSyncing(['initialization']);
-  const { accountHasSigner } = useImportedAccounts();
   const { feeReserve, getTransferOptions } = useTransferOptions();
 
-  const balance = getBalance(activeAccount);
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const balance = getBalance(activeAccount.address);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { edReserved } = allTransferOptions;
-  const poolBondOpions = allTransferOptions.pool;
-  const unlockingPools = poolBondOpions.totalUnlocking.plus(
-    poolBondOpions.totalUnlocked
-  );
 
   // User's total balance.
   const { free, frozen } = balance;
-  const totalBalance = planckToUnit(
-    free.plus(poolBondOpions.active).plus(unlockingPools),
-    units
-  );
+  const totalBalance = planckToUnit(free, units);
   // Convert balance to fiat value.
   const freeFiat = totalBalance.multipliedBy(
     new BigNumber(prices.lastPrice).decimalPlaces(2)
@@ -66,16 +57,8 @@ export const BalanceChart = () => {
     units
   );
 
-  // Total funds in pool.
-  const inPool = planckToUnit(
-    allTransferOptions.pool.active
-      .plus(allTransferOptions.pool.totalUnlocking)
-      .plus(allTransferOptions.pool.totalUnlocked),
-    units
-  );
-
   // Check account non-staking locks.
-  const { locks } = getLocks(activeAccount);
+  const { locks } = getLocks(activeAccount.address);
   const locksStaking = locks.find(({ id }) => id === 'staking');
   const lockStakingAmount = locksStaking
     ? locksStaking.amount
@@ -89,20 +72,13 @@ export const BalanceChart = () => {
   const notStaking = graphAvailable;
 
   // Graph percentages.
-  const graphTotal = nominating.plus(inPool).plus(graphAvailable);
+  const graphTotal = nominating.plus(graphAvailable);
   const graphNominating = greaterThanZero(nominating)
     ? nominating.dividedBy(graphTotal.multipliedBy(0.01))
     : new BigNumber(0);
 
-  const graphInPool = greaterThanZero(inPool)
-    ? inPool.dividedBy(graphTotal.multipliedBy(0.01))
-    : new BigNumber(0);
-
   const graphNotStaking = greaterThanZero(graphTotal)
-    ? BigNumber.max(
-        new BigNumber(100).minus(graphNominating).minus(graphInPool),
-        0
-      )
+    ? BigNumber.max(new BigNumber(100).minus(graphNominating), 0)
     : new BigNumber(0);
 
   // Available balance data.
@@ -136,11 +112,6 @@ export const BalanceChart = () => {
   });
 
   const isNominating = greaterThanZero(nominating);
-  const isInPool = greaterThanZero(
-    poolBondOpions.active
-      .plus(poolBondOpions.totalUnlocked)
-      .plus(poolBondOpions.totalUnlocking)
-  );
 
   return (
     <>
@@ -153,7 +124,7 @@ export const BalanceChart = () => {
             zeroDecimals={2}
           />
           <span className="note">
-            {plugins.includes('binance_spot') ? (
+            {plugins.includes('coingecko') ? (
               <>&nbsp;{usdFormatter.format(freeFiat.toNumber())}</>
             ) : null}
           </span>
@@ -165,30 +136,21 @@ export const BalanceChart = () => {
           {isNominating ? (
             <LegendItem dataClass="d1" label={t('overview.nominating')} />
           ) : null}
-          {greaterThanZero(inPool) ? (
-            <LegendItem dataClass="d2" label={t('overview.inPool')} />
-          ) : null}
           <LegendItem dataClass="d4" label={t('overview.notStaking')} />
         </Legend>
         <Bar>
           <BarSegment
             dataClass="d1"
             widthPercent={Number(graphNominating.toFixed(2))}
-            flexGrow={!inPool && !notStaking && isNominating ? 1 : 0}
+            flexGrow={!notStaking && isNominating ? 1 : 0}
             label={`${nominating.decimalPlaces(3).toFormat()} ${unit}`}
-          />
-          <BarSegment
-            dataClass="d2"
-            widthPercent={Number(graphInPool.toFixed(2))}
-            flexGrow={!isNominating && !notStaking && inPool ? 1 : 0}
-            label={`${inPool.decimalPlaces(3).toFormat()} ${unit}`}
           />
           <BarSegment
             dataClass="d4"
             widthPercent={Number(graphNotStaking.toFixed(2))}
-            flexGrow={!isNominating && !inPool ? 1 : 0}
+            flexGrow={!isNominating ? 1 : 0}
             label={`${notStaking.decimalPlaces(3).toFormat()} ${unit}`}
-            forceShow={!isNominating && !isInPool}
+            forceShow={!isNominating}
           />
         </Bar>
         <section className="available">
@@ -266,11 +228,7 @@ export const BalanceChart = () => {
                             : faCheck
                     }
                     iconTransform="shrink-1"
-                    disabled={
-                      !activeAccount ||
-                      syncing ||
-                      !accountHasSigner(activeAccount)
-                    }
+                    disabled={!activeAccount.address || syncing}
                   />
                 }
               />

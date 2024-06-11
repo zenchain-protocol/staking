@@ -11,11 +11,11 @@ import { useErasToTimeLeft } from 'hooks/useErasToTimeLeft';
 import { useTimeLeft } from 'hooks/useTimeLeft';
 import { useUnstaking } from 'hooks/useUnstaking';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { ChunkWrapper } from './Wrappers';
 import type { ChunkProps } from './types';
 import { useApi } from 'contexts/Api';
 import { ButtonSubmit } from 'kits/Buttons/ButtonSubmit';
+import { useAccount } from 'wagmi';
 
 export const Chunk = ({ chunk, bondFor, onRebond }: ChunkProps) => {
   const { t } = useTranslation('modals');
@@ -25,7 +25,7 @@ export const Chunk = ({ chunk, bondFor, onRebond }: ChunkProps) => {
     networkData: { units, unit },
     network,
   } = useNetwork();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { isFastUnstaking } = useUnstaking();
   const { erasToSeconds } = useErasToTimeLeft();
   const { timeleft, setFromNow } = useTimeLeft();
@@ -42,7 +42,7 @@ export const Chunk = ({ chunk, bondFor, onRebond }: ChunkProps) => {
   // reset timer on account or network change.
   useEffect(() => {
     setFromNow(dateFrom, dateTo);
-  }, [activeAccount, network]);
+  }, [activeAccount.address, network]);
 
   return (
     <ChunkWrapper>

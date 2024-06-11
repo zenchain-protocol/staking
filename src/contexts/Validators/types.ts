@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type BigNumber from 'bignumber.js';
-import type { AnyJson, Sync } from 'types';
+import type { Sync } from 'types';
 
 export interface ValidatorsContextInterface {
   fetchValidatorPrefs: (a: ValidatorAddresses) => Promise<Validator[] | null>;
@@ -13,7 +13,6 @@ export interface ValidatorsContextInterface {
   injectValidatorListData: (entries: Validator[]) => ValidatorListEntry[];
   validators: Validator[];
   validatorIdentities: Record<string, Identity>;
-  validatorSupers: Record<string, AnyJson>;
   avgCommission: number;
   sessionValidators: string[];
   sessionParaValidators: string[];
@@ -41,14 +40,8 @@ export interface FavoriteValidatorsContextInterface {
 }
 
 export interface Identity {
-  deposit: string;
-  info: AnyJson;
-  judgements: AnyJson[];
-}
-
-export interface SuperIdentity {
-  identity: Identity;
-  superOf: [string, { Raw: string }];
+  address: string;
+  ens: string;
 }
 
 export type ValidatorAddresses = {

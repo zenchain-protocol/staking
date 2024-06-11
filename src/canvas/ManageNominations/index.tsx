@@ -11,21 +11,21 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { usePrompt } from 'contexts/Prompt';
 import { useHelp } from 'contexts/Help';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBonded } from 'contexts/Bonded';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { SubmitTx } from 'library/SubmitTx';
 import type {
   NominationSelection,
   NominationSelectionWithResetCounter,
 } from 'library/GenerateNominations/types';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { RevertPrompt } from './Prompts/RevertPrompt';
-import { CanvasSubmitTxFooter, CanvasFullScreenWrapper } from '../Wrappers';
+import { CanvasFullScreenWrapper, CanvasSubmitTxFooter } from '../Wrappers';
 import { NotificationsController } from 'controllers/NotificationsController';
 import { ButtonHelp } from 'kits/Buttons/ButtonHelp';
 import { ButtonPrimaryInvert } from 'kits/Buttons/ButtonPrimaryInvert';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
+import { useAccount } from 'wagmi';
+
+import { Staking } from '../../model/transactions';
 
 export const ManageNominations = () => {
   const { t } = useTranslation('library');
@@ -35,18 +35,13 @@ export const ManageNominations = () => {
     config: { options },
   } = useOverlay().canvas;
   const { openHelp } = useHelp();
-  const { consts, api } = useApi();
-  const { activePool } = useActivePool();
+  const { consts } = useApi();
   const { getBondedAccount } = useBonded();
-  const { activeAccount } = useActiveAccounts();
-  const { updatePoolNominations } = useBondedPools();
+  const activeAccount = useAccount();
   const { openPromptWith, closePrompt } = usePrompt();
 
   const { maxNominations } = consts;
-  const controller = getBondedAccount(activeAccount);
-  const bondFor = options?.bondFor || 'nominator';
-  const isPool = bondFor === 'pool';
-  const signingAccount = isPool ? activeAccount : controller;
+  const signingAccount = getBondedAccount(activeAccount.address);
 
   // Valid to submit transaction.
   const [valid, setValid] = useState<boolean>(false);
@@ -92,28 +87,16 @@ export const ManageNominations = () => {
 
   // Tx to submit.
   const getTx = () => {
-    let tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (!valid) {
+      return null;
     }
 
     // Note: `targets` structure differs between staking and pools.
-    const targetsToSubmit = newNominations.nominations.map((nominee) =>
-      isPool
-        ? nominee.address
-        : {
-            Id: nominee.address,
-          }
+    const targetsToSubmit = newNominations.nominations.map(
+      (nominee) => nominee.address
     );
 
-    if (isPool) {
-      if (activePool) {
-        tx = api.tx.nominationPools.nominate(activePool.id, targetsToSubmit);
-      }
-    } else {
-      tx = api.tx.staking.nominate(targetsToSubmit);
-    }
-    return tx;
+    return Staking.nominate(targetsToSubmit);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -122,15 +105,6 @@ export const ManageNominations = () => {
     shouldSubmit: valid,
     callbackSubmit: () => {
       setCanvasStatus('closing');
-    },
-    callbackInBlock: () => {
-      if (isPool && activePool) {
-        // Update bonded pool targets if updating pool nominations.
-        updatePoolNominations(
-          activePool.id,
-          newNominations.nominations.map((n) => n.address)
-        );
-      }
     },
   });
 
@@ -200,7 +174,7 @@ export const ManageNominations = () => {
       <CanvasSubmitTxFooter>
         <SubmitTx
           noMargin
-          fromController={!isPool}
+          fromController={true}
           valid={valid}
           displayFor="canvas"
           {...submitExtrinsic}

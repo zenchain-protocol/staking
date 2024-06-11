@@ -21,7 +21,7 @@ export const NominatorSetup = () => {
     <CanvasFullScreenWrapper>
       <div className="head">
         <ButtonPrimary
-          text={t('pools.back')}
+          text={t('back')}
           lg
           onClick={() => closeCanvas()}
           iconLeft={faTimes}

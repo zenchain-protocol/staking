@@ -16,7 +16,6 @@ export const defaultValidatorsContext: ValidatorsContextInterface = {
   injectValidatorListData: (entries) => [],
   validators: [],
   validatorIdentities: {},
-  validatorSupers: {},
   avgCommission: 0,
   sessionValidators: [],
   sessionParaValidators: [],

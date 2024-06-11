@@ -30,7 +30,6 @@
       }
     },
     "payouts": "收益",
-    "pools": "提名池",
     "resources": "信息",
     "stake": "抵押",
     "support": "支持",
@@ -42,9 +41,8 @@
       "minute": "分钟",
       "second": "秒"
     },
-    "title_kusama": "Kusama抵押平台",
     "title_polkadot": "Polkadot抵押平台",
-    "title_westend": "Westend抵押平台",
+    "title_zenchain": "ZenchainTestnet抵押平台",
     "validators": "验证人"
   }
 }

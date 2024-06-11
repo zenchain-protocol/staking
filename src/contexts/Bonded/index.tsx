@@ -9,16 +9,21 @@ import {
   setStateWithRef,
 } from '@w3ux/utils';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  useMemo,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useApi } from 'contexts/Api';
 import type { AnyApi, MaybeAddress } from 'types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useNetwork } from 'contexts/Network';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
-import { useOtherAccounts } from 'contexts/Connect/OtherAccounts';
-import { useExternalAccounts } from 'contexts/Connect/ExternalAccounts';
 import * as defaults from './defaults';
 import type { BondedAccount, BondedContextInterface } from './types';
+import { useConnections } from 'wagmi';
 
 export const BondedContext = createContext<BondedContextInterface>(
   defaults.defaultBondedContext
@@ -29,9 +34,14 @@ export const useBonded = () => useContext(BondedContext);
 export const BondedProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork();
   const { api, isReady } = useApi();
-  const { accounts } = useImportedAccounts();
-  const { addExternalAccount } = useExternalAccounts();
-  const { addOrReplaceOtherAccount } = useOtherAccounts();
+  const connections = useConnections();
+  const connectedAccounts = useMemo(
+    () =>
+      connections
+        .flatMap((conn) => conn.accounts)
+        .map((account) => ({ address: account })),
+    [connections]
+  );
 
   // Bonded accounts state.
   const [bondedAccounts, setBondedAccounts] = useState<BondedAccount[]>([]);
@@ -43,9 +53,11 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
   const handleSyncAccounts = () => {
     // Sync removed accounts.
     const handleRemovedAccounts = () => {
-      const removed = removedFrom(accounts, bondedAccountsRef.current, [
-        'address',
-      ]).map(({ address }) => address);
+      const removed = removedFrom(
+        connectedAccounts,
+        bondedAccountsRef.current,
+        ['address']
+      ).map(({ address }) => address);
 
       removed?.forEach((address) => {
         const unsub = unsubs.current[address];
@@ -60,7 +72,9 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
     };
     // Sync added accounts.
     const handleAddedAccounts = () => {
-      const added = addedTo(accounts, bondedAccountsRef.current, ['address']);
+      const added = addedTo(connectedAccounts, bondedAccountsRef.current, [
+        'address',
+      ]);
 
       if (added.length) {
         // Subscribe to all newly added accounts bonded and nominator status.
@@ -71,7 +85,9 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
     // Sync existing accounts.
     const handleExistingAccounts = () => {
       setStateWithRef(
-        matchedProperties(accounts, bondedAccountsRef.current, ['address']),
+        matchedProperties(connectedAccounts, bondedAccountsRef.current, [
+          'address',
+        ]),
         setBondedAccounts,
         bondedAccountsRef
       );
@@ -102,16 +118,6 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
             : (newController.toHuman() as string | null);
         newAccount.bonded = newController;
 
-        // add bonded (controller) account as external account if not presently imported
-        if (newController) {
-          if (accounts.find((s) => s.address === newController) === undefined) {
-            const result = addExternalAccount(newController, 'system');
-            if (result) {
-              addOrReplaceOtherAccount(result.account, result.type);
-            }
-          }
-        }
-
         // remove stale account if it's already in list.
         const newBonded = Object.values(bondedAccountsRef.current)
           .filter((a) => a.address !== address)
@@ -134,7 +140,7 @@ export const BondedProvider = ({ children }: { children: ReactNode }) => {
     if (isReady) {
       handleSyncAccounts();
     }
-  }, [accounts, network, isReady]);
+  }, [connectedAccounts, network, isReady]);
 
   // Unsubscribe from subscriptions on unmount.
   useEffect(

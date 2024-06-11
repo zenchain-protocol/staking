@@ -1,7 +1,7 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { greaterThanZero, rmCommas, shuffle } from '@w3ux/utils';
+import { rmCommas, shuffle } from '@w3ux/utils';
 import BigNumber from 'bignumber.js';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -17,7 +17,6 @@ import type {
   Identity,
   Validator,
   ValidatorAddresses,
-  SuperIdentity,
   ValidatorListEntry,
   ValidatorsContextInterface,
   ValidatorEraPointHistory,
@@ -32,6 +31,9 @@ import {
 import { getLocalEraValidators, setLocalEraValidators } from '../Utils';
 import { useErasPerDay } from 'hooks/useErasPerDay';
 import { IdentitiesController } from 'controllers/IdentitiesController';
+import { usePublicClient } from 'wagmi';
+import type { PublicClient } from 'viem';
+import { mainnetWagmiConfig } from '../../../config/wagmi';
 
 export const ValidatorsContext = createContext<ValidatorsContextInterface>(
   defaultValidatorsContext
@@ -45,11 +47,15 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     isReady,
     api,
     consts: { historyDepth },
-    networkMetrics: { earliestStoredSession },
+    activeEra,
   } = useApi();
-  const { activeEra } = useApi();
   const { stakers } = useStaking().eraStakers;
   const { erasPerDay, maxSupportedDays } = useErasPerDay();
+
+  const mainnetViemClient = usePublicClient({
+    chainId: 1,
+    config: mainnetWagmiConfig,
+  }) as PublicClient;
 
   // Stores all validator entries.
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -60,11 +66,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   // Store validator identity data.
   const [validatorIdentities, setValidatorIdentities] = useState<
     Record<string, Identity>
-  >({});
-
-  // Store validator super identity data.
-  const [validatorSupers, setValidatorSupers] = useState<
-    Record<string, SuperIdentity>
   >({});
 
   // Stores the currently active validator set.
@@ -284,9 +285,9 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // The validator entries for the current active era.
-    let validatorEntries: Validator[] = [];
+    let validatorEntries: Validator[];
     // Average network commission for all non 100% commissioned validators.
-    let avg = 0;
+    let avg: number;
 
     if (localEraValidators) {
       validatorEntries = localEraValidators.entries;
@@ -316,13 +317,11 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setValidators(shuffle(validatorEntries));
 
     const addresses = validatorEntries.map(({ address }) => address);
-    const { identities, supers } = await IdentitiesController.fetch(
-      api,
-      addresses
+    const identities = await IdentitiesController.fetch(
+      mainnetViemClient,
+      addresses as `0x${string}`[]
     );
-
     setValidatorIdentities(identities);
-    setValidatorSupers(supers);
     setValidatorsFetched('synced');
   };
 
@@ -333,20 +332,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     }
     const sessionValidatorsRaw: AnyApi = await api.query.session.validators();
     setSessionValidators(sessionValidatorsRaw.toHuman());
-  };
-
-  // Subscribe to active parachain validators.
-  const subscribeParachainValidators = async () => {
-    if (!api || !isReady) {
-      return;
-    }
-    const unsub: AnyApi = await api.query.paraSessionInfo.accountKeys(
-      earliestStoredSession.toString(),
-      (v: AnyApi) => {
-        setSessionParaValidators(v.toHuman());
-        sessionParaUnsub.current = unsub;
-      }
-    );
   };
 
   // Fetches prefs for a list of validators.
@@ -519,7 +504,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAvgCommission(0);
     setValidators([]);
     setValidatorIdentities({});
-    setValidatorSupers({});
     setErasRewardPoints({});
     setEraPointsBoundaries(null);
     setValidatorEraPointsHistory({});
@@ -556,13 +540,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isReady, erasRewardPoints]);
 
-  // Fetch parachain session validators when `earliestStoredSession` ready.
-  useEffectIgnoreInitial(() => {
-    if (isReady && greaterThanZero(earliestStoredSession)) {
-      subscribeParachainValidators();
-    }
-  }, [isReady, earliestStoredSession]);
-
   // Unsubscribe on network change and component unmount.
   useEffect(() => {
     sessionParaUnsub.current?.();
@@ -579,7 +556,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
         injectValidatorListData,
         validators,
         validatorIdentities,
-        validatorSupers,
         avgCommission,
         sessionValidators,
         sessionParaValidators,

@@ -1,74 +1,65 @@
 // Copyright 2024 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
+import type { Identity } from '../../contexts/Validators/types';
+import { normalize } from 'viem/ens';
+import type { PublicClient } from 'viem';
+import type { ViemCall } from './types';
+import { ensResolverAbi, ensRegistryAbi } from './types';
 
-import type { AnyApi, AnyJson } from 'types';
-import type { ApiPromise } from '@polkadot/api';
-
+// TODO: need to test this implementation
 export class IdentitiesController {
-  static fetch = async (api: ApiPromise, addresses: string[]) => {
-    // Fetches identities for addresses.
-    const fetchBase = async () => {
-      const result = (await api.query.identity.identityOf.multi(addresses)).map(
-        (identity) => identity.toHuman()
-      );
+  // Fetches identities for addresses.
+  static fetch = async (
+    client: PublicClient,
+    addresses: `0x${string}`[]
+  ): Promise<Record<string, Identity>> => {
+    const ensRegistryContract = client.chain?.contracts?.ensRegistry;
+    if (!ensRegistryContract) {
+      return {};
+    }
 
-      // Take identity data (first index) of results.
-      const data = result.map(
-        (resultArray: AnyJson | null) => resultArray?.[0] || null
-      );
+    const resolverCalls: ViemCall[] = addresses.map((address) => ({
+      address: ensRegistryContract.address,
+      abi: ensRegistryAbi,
+      functionName: 'resolver',
+      args: [normalize(address)],
+    }));
 
-      return Object.fromEntries(
-        data
-          .map((key: string, index: number) => [addresses[index], key])
-          .filter(([, value]: AnyJson) => value !== null)
-      );
-    };
+    const resolverAddresses = await client.multicall({
+      contracts: resolverCalls,
+      allowFailure: true,
+    });
 
-    // Fetch an array of super accounts and their identities.
-    const fetchSupers = async () => {
-      const supersRaw = (await api.query.identity.superOf.multi(addresses)).map(
-        (superOf) => superOf.toHuman()
-      );
+    const nameCalls: ViemCall[] = resolverAddresses
+      .map((result, i) => {
+        if (
+          result.error ||
+          result.result === '0x0000000000000000000000000000000000000000'
+        ) {
+          return null;
+        }
+        return {
+          address: result.result as `0x${string}`, // Resolver address
+          abi: ensResolverAbi,
+          functionName: 'name',
+          args: [normalize(addresses[i])],
+        };
+      })
+      .filter((result) => result !== null) as ViemCall[];
 
-      const supers = Object.fromEntries(
-        supersRaw
-          .map((k, i) => [
-            addresses[i],
-            {
-              superOf: k,
-            },
-          ])
-          .filter(([, { superOf }]: AnyApi) => superOf !== null)
-      );
+    const ensNames = await client.multicall({
+      contracts: nameCalls,
+      allowFailure: true,
+    });
 
-      const superIdentities = (
-        await api.query.identity.identityOf.multi(
-          Object.values(supers).map(({ superOf }: AnyApi) => superOf[0])
-        )
-      ).map((superIdentity) => superIdentity.toHuman());
-
-      // Take identity data (first index) of results.
-      const data = superIdentities.map(
-        (resultArray: AnyJson | null) => resultArray?.[0] || null
-      );
-
-      const supersWithIdentity = Object.fromEntries(
-        Object.entries(supers).map(([k, v]: AnyApi, i) => [
-          k,
-          {
-            ...v,
-            identity: data[i],
-          },
-        ])
-      );
-      return supersWithIdentity;
-    };
-
-    const [identities, supers] = await Promise.all([
-      fetchBase(),
-      fetchSupers(),
-    ]);
-
-    return { identities, supers };
+    return ensNames.reduce((acc: Record<string, Identity>, result, index) => {
+      if (!result.error && result.result) {
+        acc[addresses[index]] = {
+          address: addresses[index],
+          ens: result.result as string,
+        };
+      }
+      return acc;
+    }, {});
   };
 }

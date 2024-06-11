@@ -5,24 +5,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CallToActionWrapper } from 'library/CallToAction';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from 'contexts/Api';
 import type { NewNominatorProps } from '../types';
 import { CallToActionLoader } from 'library/Loader/CallToAction';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useOverlay } from 'kits/Overlay/Provider';
+import { useAccount } from 'wagmi';
 
 export const NewNominator = ({ syncing }: NewNominatorProps) => {
   const { t } = useTranslation();
   const { isReady } = useApi();
   const navigate = useNavigate();
   const { openCanvas } = useOverlay().canvas;
-  const { activeAccount } = useActiveAccounts();
-  const { isReadOnlyAccount } = useImportedAccounts();
+  const activeAccount = useAccount();
 
-  const nominateButtonDisabled =
-    !isReady || !activeAccount || isReadOnlyAccount(activeAccount);
+  const nominateButtonDisabled = !isReady || !activeAccount.address;
 
   return (
     <CallToActionWrapper>

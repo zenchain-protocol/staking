@@ -3,11 +3,7 @@
 
 import { setStateWithRef } from '@w3ux/utils';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import {
-  NetworkList,
-  NetworksWithPagedRewards,
-  PagedRewardsStartEra,
-} from 'config/networks';
+import { NetworkList } from 'config/networks';
 
 import type {
   APIActiveEra,
@@ -15,7 +11,6 @@ import type {
   APIConstants,
   APIContextInterface,
   APINetworkMetrics,
-  APIPoolsConfig,
   APIProviderProps,
   APIStakingMetrics,
 } from './types';
@@ -25,7 +20,6 @@ import {
   defaultActiveEra,
   defaultApiContext,
   defaultChainState,
-  defaultPoolsConfig,
   defaultNetworkMetrics,
   defaultStakingMetrics,
 } from './defaults';
@@ -69,7 +63,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
   const initialRpcEndpoint = () => {
     const local = localStorage.getItem(`${network}_rpc_endpoint`);
     if (local) {
-      if (NetworkList[network].endpoints.rpcEndpoints[local]) {
+      if (NetworkList[network].endpoints.wsRpcEndpoints[local]) {
         return local;
       } else {
         localStorage.removeItem(`${network}_rpc_endpoint`);
@@ -85,7 +79,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
 
   // Set RPC provider with local storage and validity checks.
   const setRpcEndpoint = (key: string) => {
-    if (!NetworkList[network].endpoints.rpcEndpoints[key]) {
+    if (!NetworkList[network].endpoints.wsRpcEndpoints[key]) {
       return;
     }
     localStorage.setItem(`${network}_rpc_endpoint`, key);
@@ -109,11 +103,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
   // Store active era in state.
   const [activeEra, setActiveEra] = useState<APIActiveEra>(defaultActiveEra);
   const activeEraRef = useRef(activeEra);
-
-  // Store pool config in state.
-  const [poolsConfig, setPoolsConfig] =
-    useState<APIPoolsConfig>(defaultPoolsConfig);
-  const poolsConfigRef = useRef(poolsConfig);
 
   // Store staking metrics in state.
   const [stakingMetrics, setStakingMetrics] = useState<APIStakingMetrics>(
@@ -152,7 +141,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       consts: newConsts,
       networkMetrics: newNetworkMetrics,
       activeEra: newActiveEra,
-      poolsConfig: newPoolsConfig,
       stakingMetrics: newStakingMetrics,
     } = await apiInstance.bootstrapNetworkConfig();
 
@@ -165,7 +153,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       setActiveEra,
       activeEraRef
     );
-    setStateWithRef(newPoolsConfig, setPoolsConfig, poolsConfigRef);
     setStateWithRef(newStakingMetrics, setStakingMetrics, stakingMetricsRef);
 
     // API is now ready to be used.
@@ -177,7 +164,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     // Initialise subscriptions.
     apiInstance.subscribeBlockNumber();
     apiInstance.subscribeNetworkMetrics();
-    apiInstance.subscribePoolsConfig();
     apiInstance.subscribeActiveEra();
   };
 
@@ -275,27 +261,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     }
   };
 
-  // Handle new pools config updates.
-  const handlePoolsConfigUpdate = (e: Event): void => {
-    if (isCustomEvent(e)) {
-      const { poolsConfig: newPoolsConfig } = e.detail;
-      // Only update if values have changed.
-      if (
-        JSON.stringify(newPoolsConfig) !==
-        JSON.stringify(poolsConfigRef.current)
-      ) {
-        setStateWithRef(
-          {
-            ...poolsConfigRef.current,
-            ...newPoolsConfig,
-          },
-          setPoolsConfig,
-          poolsConfigRef
-        );
-      }
-    }
-  };
-
   // Handle new staking metrics updates.
   const handleStakingMetricsUpdate = (e: Event): void => {
     if (isCustomEvent(e)) {
@@ -315,18 +280,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
         );
       }
     }
-  };
-
-  // Given an era, determine whether paged rewards are active.
-  const isPagedRewardsActive = (era: BigNumber): boolean => {
-    const networkStartEra = PagedRewardsStartEra[network];
-    if (!networkStartEra) {
-      return false;
-    }
-    return (
-      NetworksWithPagedRewards.includes(network) &&
-      era.isGreaterThanOrEqualTo(networkStartEra)
-    );
   };
 
   const reInitialiseApi = async (type: ConnectionType) => {
@@ -373,7 +326,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       networkMetricsRef
     );
     setStateWithRef(defaultActiveEra, setActiveEra, activeEraRef);
-    setStateWithRef(defaultPoolsConfig, setPoolsConfig, poolsConfigRef);
     setStateWithRef(
       defaultStakingMetrics,
       setStakingMetrics,
@@ -402,7 +354,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     documentRef
   );
   useEventListener('new-active-era', handleActiveEraUpdate, documentRef);
-  useEventListener('new-pools-config', handlePoolsConfigUpdate, documentRef);
   useEventListener(
     'new-staking-metrics',
     handleStakingMetricsUpdate,
@@ -423,9 +374,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
         consts,
         networkMetrics,
         activeEra,
-        poolsConfig,
         stakingMetrics,
-        isPagedRewardsActive,
       }}
     >
       {children}

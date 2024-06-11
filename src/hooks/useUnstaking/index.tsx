@@ -7,20 +7,20 @@ import { useFastUnstake } from 'contexts/FastUnstake';
 import { useStaking } from 'contexts/Staking';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import type { AnyJson } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useNominationStatus } from '../useNominationStatus';
+import { useAccount } from 'wagmi';
 
 export const useUnstaking = () => {
   const { t } = useTranslation('library');
   const { consts, activeEra } = useApi();
   const { inSetup } = useStaking();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getTransferOptions } = useTransferOptions();
   const { getNominationStatus } = useNominationStatus();
   const { checking, head, isExposed, queueDeposit, meta } = useFastUnstake();
   const { bondDuration } = consts;
-  const transferOptions = getTransferOptions(activeAccount).nominate;
-  const { nominees } = getNominationStatus(activeAccount, 'nominator');
+  const transferOptions = getTransferOptions(activeAccount.address).nominate;
+  const { nominees } = getNominationStatus(activeAccount.address);
 
   // determine if user is regular unstaking
   const { active } = transferOptions;

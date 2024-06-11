@@ -4,16 +4,14 @@
 import { faBolt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
 import { useApi } from 'contexts/Api';
-import { useBonded } from 'contexts/Bonded';
 import { useFastUnstake } from 'contexts/FastUnstake';
 import { useStaking } from 'contexts/Staking';
 import { useNominationStatus } from 'hooks/useNominationStatus';
 import { useUnstaking } from 'hooks/useUnstaking';
 import { Stat } from 'library/Stat';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useSyncing } from 'hooks/useSyncing';
+import { useAccount } from 'wagmi';
 
 export const NominationStatus = ({
   showButtons = true,
@@ -25,21 +23,18 @@ export const NominationStatus = ({
   const { t } = useTranslation('pages');
   const { inSetup } = useStaking();
   const { openModal } = useOverlay().modal;
-  const { getBondedAccount } = useBonded();
   const { syncing } = useSyncing(['initialization', 'era-stakers', 'balances']);
   const {
     isReady,
     networkMetrics: { fastUnstakeErasToCheckPerBlock },
   } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { checking, isExposed } = useFastUnstake();
-  const { isReadOnlyAccount } = useImportedAccounts();
   const { getNominationStatus } = useNominationStatus();
   const { getFastUnstakeText, isUnstaking } = useUnstaking();
 
   const fastUnstakeText = getFastUnstakeText();
-  const controller = getBondedAccount(activeAccount);
-  const nominationStatus = getNominationStatus(activeAccount, 'nominator');
+  const nominationStatus = getNominationStatus(activeAccount.address);
 
   // Determine whether to display fast unstake button or regular unstake button.
   const unstakeButton =
@@ -47,7 +42,7 @@ export const NominationStatus = ({
     !nominationStatus.nominees.active.length &&
     (checking || !isExposed)
       ? {
-          disabled: checking || isReadOnlyAccount(controller),
+          disabled: checking,
           title: fastUnstakeText,
           icon: faBolt,
           onClick: () => {
@@ -57,7 +52,7 @@ export const NominationStatus = ({
       : {
           title: t('nominate.unstake'),
           icon: faSignOutAlt,
-          disabled: !isReady || isReadOnlyAccount(controller) || !activeAccount,
+          disabled: !isReady || !activeAccount.address,
           onClick: () => openModal({ key: 'Unstake', size: 'sm' }),
         };
 

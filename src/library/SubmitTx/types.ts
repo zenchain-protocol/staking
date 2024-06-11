@@ -8,7 +8,6 @@ import type { DisplayFor, MaybeAddress } from 'types';
 export type SubmitTxProps = SubmitProps & {
   buttons?: ReactNode[];
   fromController?: boolean;
-  proxySupported: boolean;
   submitAddress?: MaybeAddress;
   noMargin?: boolean;
 };

@@ -7,29 +7,26 @@ import { useSetup } from 'contexts/Setup';
 import { Footer } from 'library/SetupSteps/Footer';
 import { Header } from 'library/SetupSteps/Header';
 import { MotionContainer } from 'library/SetupSteps/MotionContainer';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Subheading } from 'pages/Nominate/Wrappers';
 import { GenerateNominations } from '../GenerateNominations';
 import type { NominationsProps } from './types';
 import type { AnyJson } from 'types';
+import { useAccount } from 'wagmi';
 
 export const Nominate = ({ bondFor, section }: NominationsProps) => {
   const { t } = useTranslation('library');
   const { consts } = useApi();
-  const { activeAccount } = useActiveAccounts();
-  const { getNominatorSetup, getPoolSetup, setActiveAccountSetup } = useSetup();
+  const activeAccount = useAccount();
+  const { getNominatorSetup, setActiveAccountSetup } = useSetup();
 
-  const setup =
-    bondFor === 'nominator'
-      ? getNominatorSetup(activeAccount)
-      : getPoolSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
 
   const { progress } = setup;
   const { maxNominations } = consts;
 
   // Handler for updating setup.
   const handleSetupUpdate = (value: AnyJson) => {
-    setActiveAccountSetup(bondFor, value);
+    setActiveAccountSetup(value);
   };
 
   return (
@@ -54,11 +51,7 @@ export const Nominate = ({ bondFor, section }: NominationsProps) => {
             {
               current: {
                 callable: true,
-                fn: () =>
-                  (bondFor === 'nominator'
-                    ? getNominatorSetup(activeAccount)
-                    : getPoolSetup(activeAccount)
-                  ).progress,
+                fn: () => getNominatorSetup(activeAccount.address).progress,
               },
               set: handleSetupUpdate,
             },

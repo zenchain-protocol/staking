@@ -9,7 +9,6 @@ import { useApi } from 'contexts/Api';
 import { useBonded } from 'contexts/Bonded';
 import { useTransferOptions } from 'contexts/TransferOptions';
 import { Warning } from 'library/Form/Warning';
-import { useBatchCall } from 'hooks/useBatchCall';
 import { useErasToTimeLeft } from 'hooks/useErasToTimeLeft';
 import { useSignerWarnings } from 'hooks/useSignerWarnings';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
@@ -20,32 +19,32 @@ import { StaticNote } from 'modals/Utils/StaticNote';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
+import { createBatchCall, Staking } from '../../model/transactions';
 
 export const Unstake = () => {
   const { t } = useTranslation('modals');
   const {
     networkData: { units, unit },
   } = useNetwork();
-  const { api, consts } = useApi();
+  const { consts } = useApi();
   const { notEnoughFunds } = useTxMeta();
-  const { newBatchCall } = useBatchCall();
   const { getBondedAccount } = useBonded();
   const { getNominations } = useBalances();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { erasToSeconds } = useErasToTimeLeft();
   const { getSignerWarnings } = useSignerWarnings();
   const { getTransferOptions } = useTransferOptions();
   const { setModalStatus, setModalResize } = useOverlay().modal;
 
-  const controller = getBondedAccount(activeAccount);
-  const nominations = getNominations(activeAccount);
+  const controller = getBondedAccount(activeAccount.address);
+  const nominations = getNominations(activeAccount.address);
   const { bondDuration } = consts;
-  const allTransferOptions = getTransferOptions(activeAccount);
+  const allTransferOptions = getTransferOptions(activeAccount.address);
   const { active } = allTransferOptions.nominate;
 
   const bondDurationFormatted = timeleftAsString(
@@ -80,9 +79,8 @@ export const Unstake = () => {
 
   // tx to submit
   const getTx = () => {
-    const tx = null;
-    if (!api || !activeAccount) {
-      return tx;
+    if (!activeAccount.address) {
+      return null;
     }
     // remove decimal errors
     const bondToSubmit = unitToPlanck(
@@ -92,10 +90,10 @@ export const Unstake = () => {
     const bondAsString = bondToSubmit.isNaN() ? '0' : bondToSubmit.toString();
 
     if (!bondAsString) {
-      return api.tx.staking.chill();
+      return Staking.chill();
     }
-    const txs = [api.tx.staking.chill(), api.tx.staking.unbond(bondAsString)];
-    return newBatchCall(txs, controller);
+    const txs = [Staking.chill(), Staking.unbond(bondAsString)];
+    return createBatchCall(txs);
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -107,11 +105,7 @@ export const Unstake = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    true,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount.address, true);
 
   return (
     <>

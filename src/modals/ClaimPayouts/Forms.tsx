@@ -7,17 +7,13 @@ import BigNumber from 'bignumber.js';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { Warning } from 'library/Form/Warning';
 import { useSignerWarnings } from 'hooks/useSignerWarnings';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
 import { SubmitTx } from 'library/SubmitTx';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useBatchCall } from 'hooks/useBatchCall';
-import type { AnyApi } from 'types';
 import { usePayouts } from 'contexts/Payouts';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import type { FormProps, ActivePayout } from './types';
 import { ContentWrapper } from './Wrappers';
 import { SubscanController } from 'controllers/SubscanController';
@@ -25,6 +21,9 @@ import { ButtonSubmitInvert } from 'kits/Buttons/ButtonSubmitInvert';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ActionItem } from 'library/ActionItem';
+import { useAccount } from 'wagmi';
+import type { TxData } from '../../model/transactions';
+import { createBatchCall, Staking } from '../../model/transactions';
 
 export const Forms = forwardRef(
   (
@@ -32,14 +31,12 @@ export const Forms = forwardRef(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     const { t } = useTranslation('modals');
-    const { api } = useApi();
     const {
       networkData: { units, unit },
     } = useNetwork();
-    const { newBatchCall } = useBatchCall();
     const { removeEraPayout } = usePayouts();
     const { setModalStatus } = useOverlay().modal;
-    const { activeAccount } = useActiveAccounts();
+    const activeAccount = useAccount();
     const { getSignerWarnings } = useSignerWarnings();
 
     // Get the total payout amount.
@@ -59,17 +56,15 @@ export const Forms = forwardRef(
       ) || 0;
 
     const getCalls = () => {
-      if (!api) {
-        return [];
-      }
-
-      const calls: AnyApi[] = [];
+      const calls: TxData[] = [];
       payouts?.forEach(({ era, paginatedValidators }) => {
         if (!paginatedValidators) {
           return [];
         }
         return paginatedValidators.forEach(([page, v]) =>
-          calls.push(api.tx.staking.payoutStakersByPage(v, era, page))
+          calls.push(
+            Staking.payoutStakersByPage(v as `0x${string}`, parseInt(era), page)
+          )
         );
       });
       return calls;
@@ -87,32 +82,31 @@ export const Forms = forwardRef(
     );
 
     const getTx = () => {
-      const tx = null;
       const calls = getCalls();
-      if (!valid || !api || !calls.length) {
-        return tx;
+      if (!valid || !calls.length) {
+        return null;
       }
-
-      return calls.length === 1
-        ? calls.pop()
-        : newBatchCall(calls, activeAccount);
+      return calls.length === 1 ? calls.pop() ?? null : createBatchCall(calls);
     };
 
     const submitExtrinsic = useSubmitExtrinsic({
       tx: getTx(),
-      from: activeAccount,
+      from: activeAccount.address,
       shouldSubmit: valid,
       callbackSubmit: () => {
         setModalStatus('closing');
       },
       callbackInBlock: () => {
-        if (payouts && activeAccount) {
+        if (payouts && activeAccount.address) {
           // Remove Subscan unclaimed payout record(s) if they exist.
           const eraPayouts: string[] = [];
           payouts.forEach(({ era }) => {
             eraPayouts.push(String(era));
           });
-          SubscanController.removeUnclaimedPayouts(activeAccount, eraPayouts);
+          SubscanController.removeUnclaimedPayouts(
+            activeAccount.address,
+            eraPayouts
+          );
 
           // Deduct from `unclaimedPayouts` in Payouts context.
           payouts.forEach(({ era, paginatedValidators }) => {
@@ -126,11 +120,7 @@ export const Forms = forwardRef(
       },
     });
 
-    const warnings = getSignerWarnings(
-      activeAccount,
-      false,
-      submitExtrinsic.proxySupported
-    );
+    const warnings = getSignerWarnings(activeAccount.address, false);
 
     return (
       <ContentWrapper>

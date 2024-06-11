@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { greaterThanZero, rmCommas, setStateWithRef } from '@w3ux/utils';
-import BigNumber from 'bignumber.js';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { useBalances } from 'contexts/Balances';
-import type { ExternalAccount } from '@w3ux/react-connect-kit/types';
 import type {
   EraStakers,
   Exposure,
@@ -18,18 +16,15 @@ import Worker from 'workers/stakers?worker';
 import type { ProcessExposuresResponse } from 'workers/types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import { useApi } from '../Api';
 import { useBonded } from '../Bonded';
 import { defaultEraStakers, defaultStakingContext } from './defaults';
-import {
-  setLocalEraExposures,
-  getLocalEraExposures,
-  formatRawExposures,
-} from './Utils';
+import { setLocalEraExposures, getLocalEraExposures } from './Utils';
 import type { NominationStatus } from 'library/ValidatorList/ValidatorItem/types';
 import { SyncController } from 'controllers/SyncController';
+import { useAccount, useConnections } from 'wagmi';
+import { getAccount } from 'wagmi/actions';
+import { wagmiConfig } from '../../config/wagmi';
 
 const worker = new Worker();
 
@@ -43,9 +38,10 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
   const { getBondedAccount } = useBonded();
   const { networkData, network } = useNetwork();
   const { getLedger, getNominations } = useBalances();
-  const { accounts: connectAccounts } = useImportedAccounts();
-  const { activeAccount, getActiveAccount } = useActiveAccounts();
-  const { isReady, api, apiStatus, activeEra, isPagedRewardsActive } = useApi();
+  const activeAccount = useAccount();
+  const connections = useConnections();
+  const connectAccounts = connections.flatMap((conn) => conn.accounts);
+  const { isReady, api, apiStatus, activeEra } = useApi();
 
   // Store eras stakers in state.
   const [eraStakers, setEraStakers] = useState<EraStakers>(defaultEraStakers);
@@ -74,7 +70,7 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
       } = data;
 
       // check if account hasn't changed since worker started
-      if (getActiveAccount() === who) {
+      if (getAccount(wagmiConfig).address === who) {
         // Syncing current eraStakers is now complete.
         SyncController.dispatch('era-stakers', 'complete');
 
@@ -135,7 +131,7 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
       era: activeEra.index.toString(),
       networkName: network,
       task: 'processExposures',
-      activeAccount,
+      activeAccount: activeAccount.address,
       units: networkData.units,
       exposures,
     });
@@ -174,54 +170,31 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
   // Helper function to determine whether the controller account is the same as the stash account.
   const addressDifferentToStash = (address: MaybeAddress) => {
     // check if controller is imported.
-    if (!connectAccounts.find((acc) => acc.address === address)) {
+    if (!connectAccounts.find((acc) => acc === address)) {
       return false;
     }
-    return address !== activeAccount && activeAccount !== null;
-  };
-
-  // Helper function to determine whether the controller account has been imported.
-  const getControllerNotImported = (address: MaybeAddress) => {
-    if (address === null || !activeAccount) {
-      return false;
-    }
-    // check if controller is imported
-    const exists = connectAccounts.find((a) => a.address === address);
-    if (exists === undefined) {
-      return true;
-    }
-    // controller account exists. If it is a read-only account, then controller is imported.
-    if (Object.prototype.hasOwnProperty.call(exists, 'addedBy')) {
-      if ((exists as ExternalAccount).addedBy === 'user') {
-        return false;
-      }
-    }
-    // if the controller is a Ledger account, then it can act as a signer.
-    if (exists.source === 'ledger') {
-      return false;
-    }
-    // if a `signer` does not exist on the account, then controller is not imported.
-    return !Object.prototype.hasOwnProperty.call(exists, 'signer');
+    return address !== activeAccount.address && activeAccount.address !== null;
   };
 
   // Helper function to determine whether the active account.
-  const hasController = () => getBondedAccount(activeAccount) !== null;
+  const hasController = () => getBondedAccount(activeAccount.address) !== null;
 
   // Helper function to determine whether the active account is bonding, or is yet to start.
   const isBonding = () =>
     hasController() &&
-    greaterThanZero(getLedger({ stash: activeAccount }).active);
+    greaterThanZero(getLedger({ stash: activeAccount.address }).active);
 
   // Helper function to determine whether the active account.
   const isUnlocking = () =>
-    hasController() && getLedger({ stash: activeAccount }).unlocking.length;
+    hasController() &&
+    getLedger({ stash: activeAccount.address }).unlocking.length;
 
   // Helper function to determine whether the active account is nominating, or is yet to start.
-  const isNominating = () => getNominations(activeAccount).length > 0;
+  const isNominating = () => getNominations(activeAccount.address).length > 0;
 
   // Helper function to determine whether the active account is nominating, or is yet to start.
   const inSetup = () =>
-    !activeAccount ||
+    !activeAccount.address ||
     (!hasController() && !isBonding() && !isNominating() && !isUnlocking());
 
   // If paged rewards are active for the era, fetch eras stakers from the new storage items,
@@ -231,63 +204,55 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
       return [];
     }
 
-    if (isPagedRewardsActive(new BigNumber(era))) {
-      const overview: AnyApi =
-        await api.query.staking.erasStakersOverview.entries(era);
+    const overview: AnyApi =
+      await api.query.staking.erasStakersOverview.entries(era);
 
-      const validators = overview.reduce(
-        (prev: Record<string, Exposure>, [keys, value]: AnyApi) => {
-          const validator = keys.toHuman()[1];
-          const { own, total } = value.toHuman();
-          return { ...prev, [validator]: { own, total } };
+    const validators = overview.reduce(
+      (prev: Record<string, Exposure>, [keys, value]: AnyApi) => {
+        const validator = keys.toHuman()[1];
+        const { own, total } = value.toHuman();
+        return { ...prev, [validator]: { own, total } };
+      },
+      {}
+    );
+    const validatorKeys = Object.keys(validators);
+
+    const pagedResults = await Promise.all(
+      validatorKeys.map((v) =>
+        api.query.staking.erasStakersPaged.entries(era, v)
+      )
+    );
+
+    const result: Exposure[] = [];
+    let i = 0;
+    for (const pagedResult of pagedResults) {
+      const validator = validatorKeys[i];
+      const { own, total } = validators[validator];
+      const others = pagedResult.reduce(
+        (prev: ExposureOther[], [, v]: AnyApi) => {
+          const o = v.toHuman()?.others || [];
+          if (!o.length) {
+            return prev;
+          }
+          return prev.concat(o);
         },
-        {}
-      );
-      const validatorKeys = Object.keys(validators);
-
-      const pagedResults = await Promise.all(
-        validatorKeys.map((v) =>
-          api.query.staking.erasStakersPaged.entries(era, v)
-        )
+        []
       );
 
-      const result: Exposure[] = [];
-      let i = 0;
-      for (const pagedResult of pagedResults) {
-        const validator = validatorKeys[i];
-        const { own, total } = validators[validator];
-        const others = pagedResult.reduce(
-          (prev: ExposureOther[], [, v]: AnyApi) => {
-            const o = v.toHuman()?.others || [];
-            if (!o.length) {
-              return prev;
-            }
-            return prev.concat(o);
-          },
-          []
-        );
-
-        result.push({
-          keys: [rmCommas(era), validator],
-          val: {
-            total: rmCommas(total),
-            own: rmCommas(own),
-            others: others.map(({ who, value }) => ({
-              who,
-              value: rmCommas(value),
-            })),
-          },
-        });
-        i++;
-      }
-      return result;
+      result.push({
+        keys: [rmCommas(era), validator],
+        val: {
+          total: rmCommas(total),
+          own: rmCommas(own),
+          others: others.map(({ who, value }) => ({
+            who,
+            value: rmCommas(value),
+          })),
+        },
+      });
+      i++;
     }
-
-    // DEPRECATION: Paged Rewards
-    //
-    // Use legacy `erasStakers` storage item.
-    const result = await api.query.staking.erasStakers.entries(era);
-    return formatRawExposures(result);
+    return result;
   };
 
   useEffectIgnoreInitial(() => {
@@ -301,14 +266,13 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
     if (isReady) {
       fetchActiveEraStakers();
     }
-  }, [isReady, activeEra.index, activeAccount]);
+  }, [isReady, activeEra.index, activeAccount.address]);
 
   return (
     <StakingContext.Provider
       value={{
         fetchEraStakers,
         getNominationsStatusFromTargets,
-        getControllerNotImported,
         addressDifferentToStash,
         isBonding,
         isNominating,

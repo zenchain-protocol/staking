@@ -4,19 +4,17 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { MaybeAddress } from 'types';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import * as defaults from './defaults';
 import type { BalancesContextInterface } from './types';
 import { useEventListener } from 'usehooks-ts';
 import { isCustomEvent } from 'controllers/utils';
 import { BalancesController } from 'controllers/BalancesController';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useActiveBalances } from 'hooks/useActiveBalances';
 import { useBonded } from 'contexts/Bonded';
 import { SyncController } from 'controllers/SyncController';
-import { useApi } from 'contexts/Api';
-import { ActivePoolsController } from 'controllers/ActivePoolsController';
-import { useCreatePoolAccounts } from 'hooks/useCreatePoolAccounts';
+import { useAccount } from 'wagmi';
+import { useEffectIgnoreInitial } from '@w3ux/hooks';
+import { useApi } from '../Api';
 
 export const BalancesContext = createContext<BalancesContextInterface>(
   defaults.defaultBalancesContext
@@ -25,24 +23,21 @@ export const BalancesContext = createContext<BalancesContextInterface>(
 export const useBalances = () => useContext(BalancesContext);
 
 export const BalancesProvider = ({ children }: { children: ReactNode }) => {
-  const { api } = useApi();
   const { getBondedAccount } = useBonded();
-  const { accounts } = useImportedAccounts();
-  const createPoolAccounts = useCreatePoolAccounts();
-  const { activeAccount, activeProxy } = useActiveAccounts();
-  const controller = getBondedAccount(activeAccount);
+  const activeAccount = useAccount();
+  const controller = getBondedAccount(activeAccount.address);
+  const { isReady, api } = useApi();
 
-  // Listen to balance updates for the active account, active proxy and controller.
+  // Listen to balance updates for the active account and controller.
   const {
     activeBalances,
     getLocks,
     getBalance,
     getLedger,
     getPayee,
-    getPoolMembership,
     getNominations,
   } = useActiveBalances({
-    accounts: [activeAccount, activeProxy, controller],
+    accounts: [activeAccount.address, controller],
   });
 
   // Check all accounts have been synced. App-wide syncing state for all accounts.
@@ -53,28 +48,15 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
     ) {
       // Update whether all account balances have been synced.
       checkBalancesSynced();
-
-      const { address, ...newBalances } = e.detail;
-      const { poolMembership } = newBalances;
-
-      // If a pool membership exists, let `ActivePools` know of pool membership to re-sync pool
-      // details and nominations.
-      if (api && poolMembership) {
-        const { poolId } = poolMembership;
-        const newPools = ActivePoolsController.getformattedPoolItems(
-          address
-        ).concat({
-          id: String(poolId),
-          addresses: { ...createPoolAccounts(Number(poolId)) },
-        });
-        ActivePoolsController.syncPools(api, address, newPools);
-      }
     }
   };
 
   // Check whether all accounts have been synced and update state accordingly.
   const checkBalancesSynced = () => {
-    if (Object.keys(BalancesController.balances).length === accounts.length) {
+    if (
+      Object.keys(BalancesController.balances).length ===
+      activeAccount.addresses?.length
+    ) {
       SyncController.dispatch('balances', 'complete');
     }
   };
@@ -102,10 +84,17 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
 
   // If no accounts are imported, set balances synced to true.
   useEffect(() => {
-    if (!accounts.length) {
+    if (!activeAccount.addresses?.length) {
       SyncController.dispatch('balances', 'complete');
     }
-  }, [accounts.length]);
+  }, [activeAccount.addresses?.length]);
+
+  // Keep accounts in sync with `BalancesController`.
+  useEffectIgnoreInitial(() => {
+    if (api && isReady && activeAccount.addresses) {
+      BalancesController.syncAccounts(api, activeAccount.addresses as string[]);
+    }
+  }, [isReady, activeAccount.addresses]);
 
   return (
     <BalancesContext.Provider
@@ -116,7 +105,6 @@ export const BalancesProvider = ({ children }: { children: ReactNode }) => {
         getBalance,
         getLedger,
         getPayee,
-        getPoolMembership,
         getNominations,
       }}
     >

@@ -21,7 +21,6 @@ export const HelpConfig: HelpItems = [
       'Ideal Staked',
       'Supply Staked',
       'Read Only Accounts',
-      'Proxy Accounts',
       'Reserve Balance For Existential Deposit',
     ],
     external: [
@@ -82,34 +81,6 @@ export const HelpConfig: HelpItems = [
       [
         'changeNominations',
         'https://support.polkadot.network/support/solutions/articles/65000182518-how-to-use-the-staking-dashboard-changing-your-nominations',
-        'polkadot.network',
-      ],
-    ],
-  },
-  {
-    key: 'pools',
-    definitions: [
-      'Nomination Pools',
-      'Active Pools',
-      'Minimum To Join Pool',
-      'Minimum To Create Pool',
-      'Pool Membership',
-      'Bonded in Pool',
-      'Pool Rewards',
-      'Pool Roles',
-      'Pool Commission Rate',
-      'Pool Max Commission',
-      'Pool Commission Change Rate',
-    ],
-    external: [
-      [
-        'createPools',
-        'https://support.polkadot.network/support/solutions/articles/65000182388-how-to-use-the-staking-dashboard-creating-nomination-pools',
-        'polkadot.network',
-      ],
-      [
-        'claimRewards',
-        'https://support.polkadot.network/support/solutions/articles/65000182399-how-to-use-staking-dashboard-claiming-nomination-pool-rewards',
         'polkadot.network',
       ],
     ],

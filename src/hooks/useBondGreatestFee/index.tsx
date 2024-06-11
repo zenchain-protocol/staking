@@ -3,22 +3,18 @@
 
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
-import { useApi } from 'contexts/Api';
 import { useTransferOptions } from 'contexts/TransferOptions';
-import type { BondFor } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
+import { useAccount, usePublicClient } from 'wagmi';
+import { estimateLegacyTxFee, Staking } from '../../model/transactions';
+import type { PublicClient } from 'viem';
 
-interface Props {
-  bondFor: BondFor;
-}
-
-export const useBondGreatestFee = ({ bondFor }: Props) => {
-  const { api } = useApi();
-  const { activeAccount } = useActiveAccounts();
+export const useBondGreatestFee = () => {
+  const activeAccount = useAccount();
+  const publicClient = usePublicClient();
   const { feeReserve, getTransferOptions } = useTransferOptions();
   const transferOptions = useMemo(
-    () => getTransferOptions(activeAccount),
-    [activeAccount]
+    () => getTransferOptions(activeAccount.address),
+    [activeAccount.address]
   );
   const { transferrableBalance } = transferOptions;
 
@@ -43,23 +39,12 @@ export const useBondGreatestFee = ({ bondFor }: Props) => {
       0
     ).toString();
 
-    let tx = null;
-    if (!api) {
-      return new BigNumber(0);
-    }
-    if (bondFor === 'pool') {
-      tx = api.tx.nominationPools.bondExtra({
-        FreeBalance: bond,
-      });
-    } else if (bondFor === 'nominator') {
-      tx = api.tx.staking.bondExtra(bond);
-    }
+    const fee = await estimateLegacyTxFee(
+      publicClient as PublicClient,
+      Staking.bondExtra(bond)
+    );
 
-    if (tx) {
-      const { partialFee } = await tx.paymentInfo(activeAccount || '');
-      return new BigNumber(partialFee.toString());
-    }
-    return new BigNumber(0);
+    return new BigNumber(fee?.toString() ?? 0);
   };
 
   return largestTxFee;

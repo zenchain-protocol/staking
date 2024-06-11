@@ -20,7 +20,6 @@ export const defaultNominationStatus: NominationStatuses = {};
 export const defaultStakingContext: StakingContextInterface = {
   fetchEraStakers: async (e) => new Promise((resolve) => resolve([])),
   getNominationsStatusFromTargets: (w, t) => defaultNominationStatus,
-  getControllerNotImported: (a) => false,
   addressDifferentToStash: (a) => false,
   isBonding: () => false,
   isNominating: () => false,

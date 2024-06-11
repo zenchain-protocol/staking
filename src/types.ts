@@ -3,7 +3,6 @@
 
 import type { FC, FunctionComponent, ReactNode, SVGProps } from 'react';
 import type { Theme } from 'contexts/Themes/types';
-import type { ExtensionInjected } from '@w3ux/react-connect-kit/types';
 import type BigNumber from 'bignumber.js';
 import type { NotificationItem } from 'controllers/NotificationsController/types';
 import type { ActiveBalance } from 'contexts/Balances/types';
@@ -11,11 +10,9 @@ import type { PayoutType } from 'controllers/SubscanController/types';
 import type {
   APIActiveEra,
   APINetworkMetrics,
-  APIPoolsConfig,
   APIStakingMetrics,
 } from 'contexts/Api/types';
 import type { SyncEvent } from 'controllers/SyncController/types';
-import type { DetailActivePool } from 'controllers/ActivePoolsController/types';
 import type { CSSProperties } from 'styled-components';
 import type { APIEventDetail } from 'model/Api/types';
 import type { OnlineStatusEvent } from 'controllers/OnlineStatusController/types';
@@ -23,7 +20,6 @@ import type { OnlineStatusEvent } from 'controllers/OnlineStatusController/types
 declare global {
   interface Window {
     walletExtension?: AnyJson;
-    injectedWeb3?: Record<string, ExtensionInjected>;
     opera?: boolean;
   }
   interface DocumentEventMap {
@@ -35,11 +31,9 @@ declare global {
       networkMetrics: APINetworkMetrics;
     }>;
     'new-active-era': CustomEvent<{ activeEra: APIActiveEra }>;
-    'new-pools-config': CustomEvent<{ poolsConfig: APIPoolsConfig }>;
     'new-staking-metrics': CustomEvent<{
       stakingMetrics: APIStakingMetrics;
     }>;
-    'new-active-pool': CustomEvent<DetailActivePool>;
     'new-sync-status': CustomEvent<SyncEvent>;
     'new-external-account': CustomEvent<{ address: string }>;
     'new-account-balance': CustomEvent<ActiveBalance & { address: string }>;
@@ -47,7 +41,7 @@ declare global {
   }
 }
 
-export type NetworkName = 'polkadot' | 'kusama' | 'westend';
+export type NetworkName = 'zenchain_testnet';
 
 export type Networks = Record<string, Network>;
 
@@ -59,12 +53,13 @@ type NetworkColor =
   | 'pending';
 export interface Network {
   name: NetworkName;
+  chainId: number;
   endpoints: {
     lightClient: string;
     defaultRpcEndpoint: string;
-    rpcEndpoints: Record<string, string>;
+    wsRpcEndpoints: Record<string, string>;
+    jsonRpcEndpoints: Record<string, string>;
   };
-  namespace: string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   colors: Record<NetworkColor, { [key in Theme]: string }>;
   unit: string;
@@ -92,7 +87,7 @@ export interface Network {
   };
   api: {
     unit: string;
-    priceTicker: string;
+    priceTicker?: string;
   };
   defaultFeeReserve: number;
   maxExposurePageSize: BigNumber;
@@ -129,7 +124,7 @@ interface PageProp {
   key: string;
 }
 
-export type MaybeAddress = string | null;
+export type MaybeAddress = `0x${string}` | string | null | undefined;
 
 export type MaybeString = string | null;
 
@@ -137,7 +132,7 @@ export type MaybeString = string | null;
 export type Sync = 'unsynced' | 'syncing' | 'synced';
 
 // track whether bonding should be for nominator or nomination pool.
-export type BondFor = 'pool' | 'nominator';
+export type BondFor = 'nominator';
 
 // which medium components are being displayed on.
 export type DisplayFor = 'default' | 'modal' | 'canvas' | 'card';
@@ -156,8 +151,6 @@ export type AnyFunction = any;
 export type AnyMetaBatch = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnySubscan = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyPolkawatch = any;
 
 // A generic type to handle React components. We assume the component may have
 // children and styling applied to it.

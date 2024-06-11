@@ -6,10 +6,7 @@ import BigNumber from 'bignumber.js';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useRef, useState } from 'react';
 import { useBonded } from 'contexts/Bonded';
-import { useStaking } from 'contexts/Staking';
 import type { AnyJson, MaybeAddress } from 'types';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 import * as defaults from './defaults';
 import type { TxMetaContextInterface } from './types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
@@ -27,9 +24,6 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
     consts: { existentialDeposit },
   } = useApi();
   const { getBondedAccount } = useBonded();
-  const { activeProxy } = useActiveAccounts();
-  const { getControllerNotImported } = useStaking();
-  const { accountHasSigner } = useImportedAccounts();
 
   // Store the transaction fees for the transaction.
   const [txFees, setTxFees] = useState<BigNumber>(new BigNumber(0));
@@ -49,10 +43,6 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
     uid: number;
   } | null>(null);
   const txPayloadRef = useRef(txPayload);
-
-  // Store an optional signed transaction if extrinsics require manual signing (e.g. Ledger).
-  const [txSignature, setTxSignatureState] = useState<AnyJson>(null);
-  const txSignatureRef = useRef(txSignature);
 
   // Store the pending nonces of transactions. NOTE: Ref is required as `pendingNonces` is read in
   // callbacks.
@@ -91,38 +81,13 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
     setStateWithRef(null, setTxPayloadState, txPayloadRef);
   };
 
-  const getTxSignature = () => txSignatureRef.current;
+  const txFeesValid = (() => !(txFees.isZero() || notEnoughFunds))();
 
-  const setTxSignature = (s: AnyJson) => {
-    setStateWithRef(s, setTxSignatureState, txSignatureRef);
-  };
-
-  const txFeesValid = (() => {
-    if (txFees.isZero() || notEnoughFunds) {
-      return false;
-    }
-    return true;
-  })();
-
-  const controllerSignerAvailable = (
-    stash: MaybeAddress,
-    proxySupported: boolean
-  ) => {
+  const controllerSignerAvailable = (stash: MaybeAddress) => {
     const controller = getBondedAccount(stash);
 
     if (controller !== stash) {
-      if (getControllerNotImported(controller)) {
-        return 'controller_not_imported';
-      }
-
-      if (!accountHasSigner(controller)) {
-        return 'read_only';
-      }
-    } else if (
-      (!proxySupported || !accountHasSigner(activeProxy)) &&
-      !accountHasSigner(stash)
-    ) {
-      return 'read_only';
+      return 'controller_not_imported';
     }
     return 'ok';
   };
@@ -168,8 +133,6 @@ export const TxMetaProvider = ({ children }: { children: ReactNode }) => {
         getTxPayload,
         setTxPayload,
         resetTxPayloads,
-        getTxSignature,
-        setTxSignature,
         addPendingNonce,
         removePendingNonce,
         pendingNonces,

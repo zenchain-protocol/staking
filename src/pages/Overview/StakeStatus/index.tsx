@@ -4,7 +4,6 @@
 import { usePlugins } from 'contexts/Plugins';
 import { CardWrapper } from 'library/Card/Wrappers';
 import { NominationStatus } from 'pages/Nominate/Active/Status/NominationStatus';
-import { MembershipStatus } from 'pages/Pools/Home/Status/MembershipStatus';
 import { Tips } from './Tips';
 import { StatusWrapper } from './Wrappers';
 import { RowSection } from 'kits/Structure/RowSection';
@@ -22,9 +21,7 @@ export const StakeStatus = () => {
           </section>
         </RowSection>
         <RowSection hLast vLast>
-          <section>
-            <MembershipStatus showButtons={false} />
-          </section>
+          <section></section>
         </RowSection>
       </StatusWrapper>
 

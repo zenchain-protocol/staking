@@ -9,7 +9,6 @@ import { CardHeaderWrapper, CardWrapper } from 'library/Card/Wrappers';
 import { useUnstaking } from 'hooks/useUnstaking';
 import { StatBoxList } from 'library/StatBoxList';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { Nominations } from 'library/Nominations';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
 import { ListStatusHeader } from 'library/List';
@@ -27,6 +26,7 @@ import { PageTitle } from 'kits/Structure/PageTitle';
 import { PageRow } from 'kits/Structure/PageRow';
 import { RowSection } from 'kits/Structure/RowSection';
 import { WithdrawPrompt } from 'library/WithdrawPrompt';
+import { useAccount } from 'wagmi';
 
 export const Active = () => {
   const { t } = useTranslation();
@@ -37,9 +37,9 @@ export const Active = () => {
   const { openCanvas } = useOverlay().canvas;
   const { isFastUnstaking } = useUnstaking();
   const { formatWithPrefs } = useValidators();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
-  const nominated = formatWithPrefs(getNominations(activeAccount));
+  const nominated = formatWithPrefs(getNominations(activeAccount.address));
   const ROW_HEIGHT = 220;
 
   return (
@@ -67,7 +67,10 @@ export const Active = () => {
       <PageRow>
         <CardWrapper>
           {nominated?.length || inSetup() || syncing ? (
-            <Nominations bondFor="nominator" nominator={activeAccount} />
+            <Nominations
+              bondFor="nominator"
+              nominator={activeAccount.address}
+            />
           ) : (
             <>
               <CardHeaderWrapper $withAction $withMargin>
@@ -90,7 +93,7 @@ export const Active = () => {
                         scroll: false,
                         options: {
                           bondFor: 'nominator',
-                          nominator: activeAccount,
+                          nominator: activeAccount.address,
                           nominated,
                         },
                         size: 'xl',

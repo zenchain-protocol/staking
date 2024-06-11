@@ -24,10 +24,8 @@ import { ValidatorItem } from 'library/ValidatorList/ValidatorItem';
 import type { Validator, ValidatorListEntry } from 'contexts/Validators/types';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useValidators } from 'contexts/Validators/ValidatorEntries';
 import { useNominationStatus } from 'hooks/useNominationStatus';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { useValidatorFilters } from '../../hooks/useValidatorFilters';
 import { ListProvider, useList } from '../List/context';
 import type { ValidatorListProps } from './types';
@@ -36,6 +34,7 @@ import { FilterBadges } from './Filters/FilterBadges';
 import type { NominationStatus } from './ValidatorItem/types';
 import { useSyncing } from 'hooks/useSyncing';
 import { validatorsPerPage } from 'library/List/defaults';
+import { useAccount } from 'wagmi';
 
 export const ValidatorListInner = ({
   // Default list values.
@@ -79,10 +78,9 @@ export const ValidatorListInner = ({
   const listProvider = useList();
   const { syncing } = useSyncing();
   const { isReady, activeEra } = useApi();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { setModalResize } = useOverlay().modal;
   const { injectValidatorListData } = useValidators();
-  const { getPoolNominationStatus } = useBondedPools();
   const { getNominationSetStatus } = useNominationStatus();
   const { applyFilter, applyOrder, applySearch } = useValidatorFilters();
 
@@ -94,8 +92,8 @@ export const ValidatorListInner = ({
   const actionsAll = [...actions].filter((action) => !action.onSelected);
   const actionsSelected = [...actions].filter((action) => action.onSelected);
 
-  // Determine the nominator of the validator list. Fallback to activeAccount if not provided.
-  const nominator = initialNominator || activeAccount;
+  // Determine the nominator of the validator list. Fallback to activeAccount.address if not provided.
+  const nominator = initialNominator || activeAccount.address;
 
   // Store the current nomination status of validator records relative to the supplied nominator.
   const nominationStatus = useRef<Record<string, NominationStatus>>({});
@@ -103,28 +101,16 @@ export const ValidatorListInner = ({
   // Get nomination status relative to supplied nominator, if `format` is `nomination`.
   const processNominationStatus = () => {
     if (format === 'nomination') {
-      if (bondFor === 'pool') {
-        nominationStatus.current = Object.fromEntries(
-          initialValidators.map(({ address }) => [
-            address,
-            getPoolNominationStatus(nominator, address),
-          ])
-        );
-      } else {
-        // get all active account's nominations.
-        const nominationStatuses = getNominationSetStatus(
-          nominator,
-          'nominator'
-        );
+      // get all active account's nominations.
+      const nominationStatuses = getNominationSetStatus(nominator);
 
-        // find the nominator status within the returned nominations.
-        nominationStatus.current = Object.fromEntries(
-          initialValidators.map(({ address }) => [
-            address,
-            nominationStatuses[address],
-          ])
-        );
-      }
+      // find the nominator status within the returned nominations.
+      nominationStatus.current = Object.fromEntries(
+        initialValidators.map(({ address }) => [
+          address,
+          nominationStatuses[address],
+        ])
+      );
     }
   };
 

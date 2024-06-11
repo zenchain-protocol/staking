@@ -9,11 +9,11 @@ import { useBalances } from 'contexts/Balances';
 import type { MaybeAddress } from 'types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import type { TransferOptions, TransferOptionsContextInterface } from './types';
 import { getLocalFeeReserve, setLocalFeeReserve } from './Utils';
 import { defaultTransferOptionsContext } from './defaults';
 import { getUnlocking } from 'contexts/Balances/Utils';
+import { useAccount } from 'wagmi';
 
 export const TransferOptionsContext =
   createContext<TransferOptionsContextInterface>(defaultTransferOptionsContext);
@@ -30,14 +30,16 @@ export const TransferOptionsProvider = ({
     networkData: { units, defaultFeeReserve },
   } = useNetwork();
   const { consts, activeEra } = useApi();
-  const { activeAccount } = useActiveAccounts();
-  const { getLedger, getBalance, getLocks, getPoolMembership } = useBalances();
+  const activeAccount = useAccount();
+  const { getLedger, getBalance, getLocks } = useBalances();
   const { existentialDeposit } = consts;
-  const membership = getPoolMembership(activeAccount);
 
   // A user-configurable reserve amount to be used to pay for transaction fees.
   const [feeReserve, setFeeReserve] = useState<BigNumber>(
-    getLocalFeeReserve(activeAccount, defaultFeeReserve, { network, units })
+    getLocalFeeReserve(activeAccount.address, defaultFeeReserve, {
+      network,
+      units,
+    })
   );
 
   // Calculates various balances for an account pertaining to free balance, nominating and pools.
@@ -90,38 +92,21 @@ export const TransferOptionsProvider = ({
       };
     };
 
-    const poolBalances = () => {
-      const unlockingPool = membership?.unlocking || [];
-      const {
-        totalUnlocking: totalUnlockingPool,
-        totalUnlocked: totalUnlockedPool,
-      } = getUnlocking(unlockingPool, activeEra.index);
-
-      return {
-        active: membership?.balance || new BigNumber(0),
-        totalUnlocking: totalUnlockingPool,
-        totalUnlocked: totalUnlockedPool,
-        totalPossibleBond: BigNumber.max(freeMinusReserve.minus(maxLock), 0),
-        totalUnlockChunks: unlockingPool.length,
-      };
-    };
-
     return {
       freeBalance,
       transferrableBalance,
       balanceTxFees,
       edReserved,
       nominate: nominatorBalances(),
-      pool: poolBalances(),
     };
   };
 
   // Updates account's reserve amount in state and in local storage.
   const setFeeReserveBalance = (amount: BigNumber) => {
-    if (!activeAccount) {
+    if (!activeAccount.address) {
       return;
     }
-    setLocalFeeReserve(activeAccount, amount, network);
+    setLocalFeeReserve(activeAccount.address, amount, network);
     setFeeReserve(amount);
   };
 
@@ -132,9 +117,12 @@ export const TransferOptionsProvider = ({
   // Update an account's reserve amount on account or network change.
   useEffectIgnoreInitial(() => {
     setFeeReserve(
-      getLocalFeeReserve(activeAccount, defaultFeeReserve, { network, units })
+      getLocalFeeReserve(activeAccount.address, defaultFeeReserve, {
+        network,
+        units,
+      })
     );
-  }, [activeAccount, network]);
+  }, [activeAccount.address, network]);
 
   return (
     <TransferOptionsContext.Provider

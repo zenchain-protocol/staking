@@ -16,11 +16,15 @@ export const List = () => {
   const { validatorCommunity } = useCommunity();
 
   const [entityItems, setEntityItems] = useState<ValidatorEntry[]>(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     validatorCommunity.filter((v) => v.validators[network] !== undefined)
   );
 
   useEffect(() => {
     setEntityItems(
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       validatorCommunity.filter((v) => v.validators[network] !== undefined)
     );
   }, [network]);

@@ -3,19 +3,11 @@
 
 import { faBullhorn as faBack } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  capitalizeFirstLetter,
-  planckToUnit,
-  rmCommas,
-  sortWithNull,
-} from '@w3ux/utils';
-import BigNumber from 'bignumber.js';
+import { capitalizeFirstLetter, planckToUnit, sortWithNull } from '@w3ux/utils';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useBondedPools } from 'contexts/Pools/BondedPools';
 import { Announcement as AnnouncementLoader } from 'library/Loader/Announcement';
 import { useNetwork } from 'contexts/Network';
-import type { BondedPool } from 'contexts/Pools/BondedPools/types';
 import { useApi } from 'contexts/Api';
 import { Item } from 'library/Announcements/Wrappers';
 
@@ -25,17 +17,9 @@ export const Announcements = () => {
     network,
     networkData: { units, unit },
   } = useNetwork();
-  const { bondedPools } = useBondedPools();
   const {
-    poolsConfig: { counterForPoolMembers },
     stakingMetrics: { totalStaked },
   } = useApi();
-
-  let totalPoolPoints = new BigNumber(0);
-  bondedPools.forEach((b: BondedPool) => {
-    totalPoolPoints = totalPoolPoints.plus(rmCommas(b.points));
-  });
-  const totalPoolPointsUnit = planckToUnit(totalPoolPoints, units);
 
   const container = {
     hidden: { opacity: 0 },
@@ -58,8 +42,6 @@ export const Announcements = () => {
 
   const announcements = [];
 
-  const networkUnit = unit;
-
   // total staked on the network
   if (!totalStaked.isZero()) {
     announcements.push({
@@ -72,32 +54,6 @@ export const Announcements = () => {
       subtitle: t('overview.networkCurrentlyStakedSubtitle', {
         unit,
       }),
-    });
-  } else {
-    announcements.push(null);
-  }
-
-  // total locked in pools
-  if (bondedPools.length) {
-    announcements.push({
-      class: 'neutral',
-      title: `${totalPoolPointsUnit.integerValue().toFormat()} ${unit} ${t(
-        'overview.inPools'
-      )}`,
-      subtitle: `${t('overview.bondedInPools', { networkUnit })}`,
-    });
-  } else {
-    announcements.push(null);
-  }
-
-  if (counterForPoolMembers.isGreaterThan(0)) {
-    // total locked in pools
-    announcements.push({
-      class: 'neutral',
-      title: `${counterForPoolMembers.toFormat()} ${t(
-        'overview.poolMembersBonding'
-      )}`,
-      subtitle: `${t('overview.totalNumAccounts')}`,
     });
   } else {
     announcements.push(null);

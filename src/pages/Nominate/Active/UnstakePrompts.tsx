@@ -11,23 +11,23 @@ import { CardWrapper } from 'library/Card/Wrappers';
 import { useUnstaking } from 'hooks/useUnstaking';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useSyncing } from 'hooks/useSyncing';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
 import { ButtonRow } from 'kits/Structure/ButtonRow';
+import { useAccount } from 'wagmi';
 
 export const UnstakePrompts = () => {
   const { t } = useTranslation('pages');
   const { mode } = useTheme();
   const { syncing } = useSyncing();
   const { openModal } = useOverlay().modal;
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { unit, colors } = useNetwork().networkData;
   const { isFastUnstaking, isUnstaking, getFastUnstakeText } = useUnstaking();
 
   const { getTransferOptions } = useTransferOptions();
   const { active, totalUnlockChunks, totalUnlocked, totalUnlocking } =
-    getTransferOptions(activeAccount).nominate;
+    getTransferOptions(activeAccount.address).nominate;
   const annuncementBorderColor = colors.secondary[mode];
 
   // unstaking can withdraw

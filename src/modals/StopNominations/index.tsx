@@ -3,9 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApi } from 'contexts/Api';
 import { useBonded } from 'contexts/Bonded';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { Warning } from 'library/Form/Warning';
 import { useSignerWarnings } from 'hooks/useSignerWarnings';
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic';
@@ -13,38 +11,31 @@ import { Close } from 'library/Modal/Close';
 import { SubmitTx } from 'library/SubmitTx';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import { useBalances } from 'contexts/Balances';
 import { ModalPadding } from 'kits/Overlay/structure/ModalPadding';
 import { ModalWarnings } from 'kits/Overlay/structure/ModalWarnings';
 import { ModalSeparator } from 'kits/Overlay/structure/ModalSeparator';
+import { useAccount } from 'wagmi';
+import { Staking } from '../../model/transactions';
 
 export const StopNominations = () => {
   const { t } = useTranslation('modals');
-  const { api } = useApi();
   const { notEnoughFunds } = useTxMeta();
   const { getBondedAccount } = useBonded();
   const { getNominations } = useBalances();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
   const { getSignerWarnings } = useSignerWarnings();
   const {
     setModalStatus,
     config: { options },
     setModalResize,
   } = useOverlay().modal;
-  const { activePoolNominations, isNominator, isOwner, activePool } =
-    useActivePool();
 
   const { bondFor } = options;
-  const isPool = bondFor === 'pool';
   const isStaking = bondFor === 'nominator';
-  const controller = getBondedAccount(activeAccount);
-  const signingAccount = isPool ? activeAccount : controller;
+  const signingAccount = getBondedAccount(activeAccount.address);
 
-  const nominations =
-    isPool === true
-      ? activePoolNominations?.targets || []
-      : getNominations(activeAccount);
+  const nominations = getNominations(activeAccount.address);
 
   // valid to submit transaction
   const [valid, setValid] = useState<boolean>(false);
@@ -55,25 +46,14 @@ export const StopNominations = () => {
   }, [nominations]);
 
   // ensure roles are valid
-  let isValid = nominations.length > 0;
-  if (isPool) {
-    isValid = (isNominator() || isOwner()) ?? false;
-  }
+  const isValid = nominations.length > 0;
 
   // tx to submit
   const getTx = () => {
-    let tx = null;
-    if (!valid || !api) {
-      return tx;
+    if (valid && isStaking) {
+      return Staking.chill();
     }
-
-    if (isPool) {
-      // wishing to stop all nominations, call chill
-      tx = api.tx.nominationPools.chill(activePool?.id || 0);
-    } else if (isStaking) {
-      tx = api.tx.staking.chill();
-    }
-    return tx;
+    return null;
   };
 
   const submitExtrinsic = useSubmitExtrinsic({
@@ -85,11 +65,7 @@ export const StopNominations = () => {
     },
   });
 
-  const warnings = getSignerWarnings(
-    activeAccount,
-    isStaking,
-    submitExtrinsic.proxySupported
-  );
+  const warnings = getSignerWarnings(activeAccount.address, isStaking);
 
   if (!nominations.length) {
     warnings.push(`${t('noNominationsSet')}`);

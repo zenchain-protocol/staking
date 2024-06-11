@@ -5,18 +5,16 @@ import { setStateWithRef } from '@w3ux/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBalances } from 'contexts/Balances';
-import { useActivePool } from 'contexts/Pools/ActivePool';
 import { Title } from 'library/Modal/Title';
 import { useTxMeta } from 'contexts/TxMeta';
 import { useOverlay } from 'kits/Overlay/Provider';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useLedgerHardware } from 'contexts/LedgerHardware';
 import { Forms } from './Forms';
 import { Overview } from './Overview';
 import type { UnlockChunk } from 'contexts/Balances/types';
 import { ModalSection } from 'kits/Overlay/structure/ModalSection';
 import { ModalFixedTitle } from 'kits/Overlay/structure/ModalFixedTitle';
 import { ModalMotionTwoSection } from 'kits/Overlay/structure/ModalMotionTwoSection';
+import { useAccount } from 'wagmi';
 
 export const UnlockChunks = () => {
   const { t } = useTranslation('modals');
@@ -27,25 +25,12 @@ export const UnlockChunks = () => {
   } = useOverlay().modal;
   const { getLedger } = useBalances();
   const { notEnoughFunds } = useTxMeta();
-  const { getPoolUnlocking } = useActivePool();
-  const { activeAccount } = useActiveAccounts();
-  const { integrityChecked } = useLedgerHardware();
+  const activeAccount = useAccount();
   const { bondFor } = options || {};
 
-  // get the unlocking per bondFor
-  const getUnlocking = () => {
-    let unlocking = [];
-    let ledger;
-    switch (bondFor) {
-      case 'pool':
-        unlocking = getPoolUnlocking();
-        break;
-      default:
-        ledger = getLedger({ stash: activeAccount });
-        unlocking = ledger.unlocking;
-    }
-    return unlocking;
-  };
+  // get the unlocking
+  const getUnlocking = () =>
+    getLedger({ stash: activeAccount.address }).unlocking;
 
   const unlocking = getUnlocking();
 
@@ -91,14 +76,7 @@ export const UnlockChunks = () => {
   // resize modal on state change
   useEffect(() => {
     setModalHeight(getModalHeight());
-  }, [
-    task,
-    calculateHeight,
-    notEnoughFunds,
-    sectionRef.current,
-    unlocking,
-    integrityChecked,
-  ]);
+  }, [task, calculateHeight, notEnoughFunds, sectionRef.current, unlocking]);
 
   // resize this modal on window resize
   useEffect(() => {

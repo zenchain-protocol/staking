@@ -8,25 +8,17 @@ import {
 } from '@w3ux/utils';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { BondFor, MaybeAddress } from 'types';
+import type { MaybeAddress } from 'types';
 import { useEffectIgnoreInitial } from '@w3ux/hooks';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
-import {
-  defaultNominatorProgress,
-  defaultPoolProgress,
-  defaultSetupContext,
-} from './defaults';
+import { defaultNominatorProgress, defaultSetupContext } from './defaults';
 import type {
   NominatorProgress,
   NominatorSetup,
   NominatorSetups,
-  PoolProgress,
-  PoolSetup,
-  PoolSetups,
   SetupContextInterface,
 } from './types';
+import { useAccount } from 'wagmi';
 
 export const SetupContext =
   createContext<SetupContextInterface>(defaultSetupContext);
@@ -38,123 +30,85 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     network,
     networkData: { units },
   } = useNetwork();
-  const { accounts } = useImportedAccounts();
-  const { activeAccount } = useActiveAccounts();
+  const activeAccount = useAccount();
 
   // Store all imported accounts nominator setups.
   const [nominatorSetups, setNominatorSetups] = useState<NominatorSetups>({});
-
-  // Store all imported accounts pool creation setups.
-  const [poolSetups, setPoolSetups] = useState<PoolSetups>({});
 
   // Generates the default setup objects or the currently connected accounts. Refers to local
   // storage to hydrate state, falls back to defaults otherwise.
   const refreshSetups = () => {
     setNominatorSetups(localNominatorSetups());
-    setPoolSetups(localPoolSetups());
   };
 
-  // Type guard to check if setup is a pool or nominator.
-  const isPoolSetup = (setup: NominatorSetup | PoolSetup): setup is PoolSetup =>
-    (setup as PoolSetup).progress?.metadata !== undefined;
-
   // Utility to get the default progress based on type.
-  const defaultProgress = (type: BondFor): PoolProgress | NominatorProgress =>
-    type === 'nominator'
-      ? (defaultNominatorProgress as NominatorProgress)
-      : (defaultPoolProgress as PoolProgress);
+  const defaultProgress = (): NominatorProgress =>
+    defaultNominatorProgress as NominatorProgress;
 
   // Utility to get the default setup based on type.
-  const defaultSetup = (type: BondFor): NominatorSetup | PoolSetup =>
-    type === 'nominator'
-      ? { section: 1, progress: defaultProgress(type) as NominatorProgress }
-      : { section: 1, progress: defaultProgress(type) as PoolProgress };
+  // const defaultSetup = (type: BondFor): NominatorSetup => ({
+  //   section: 1,
+  //   progress: defaultProgress(type) as NominatorProgress,
+  // });
 
   // Gets the setup progress for a connected account. Falls back to default setup if progress does
   // not yet exist.
-  const getSetupProgress = (
-    type: BondFor,
-    address: MaybeAddress
-  ): NominatorSetup | PoolSetup => {
+  const getSetupProgress = (address: MaybeAddress): NominatorSetup => {
     const setup = Object.fromEntries(
-      Object.entries(
-        type === 'nominator' ? nominatorSetups : poolSetups
-      ).filter(([k]) => k === address)
+      Object.entries(nominatorSetups).filter(([k]) => k === address)
     );
     return (
       setup[address || ''] || {
-        progress: defaultProgress(type),
+        progress: defaultProgress(),
         section: 1,
       }
     );
   };
 
   // Getter to ensure a nominator setup is returned.
-  const getNominatorSetup = (address: MaybeAddress): NominatorSetup => {
-    const setup = getSetupProgress('nominator', address);
-    if (isPoolSetup(setup)) {
-      return defaultSetup('nominator') as NominatorSetup;
-    }
-    return setup;
-  };
-
-  // Getter to ensure a pool setup is returned.
-  const getPoolSetup = (address: MaybeAddress): PoolSetup => {
-    const setup = getSetupProgress('pool', address);
-    if (!isPoolSetup(setup)) {
-      return defaultSetup('pool') as PoolSetup;
-    }
-    return setup;
-  };
+  const getNominatorSetup = (address: MaybeAddress): NominatorSetup =>
+    getSetupProgress(address);
 
   // Remove setup progress for an account.
-  const removeSetupProgress = (type: BondFor, address: MaybeAddress) => {
+  const removeSetupProgress = (address: MaybeAddress) => {
     const updatedSetups = Object.fromEntries(
-      Object.entries(
-        type === 'nominator' ? nominatorSetups : poolSetups
-      ).filter(([k]) => k !== address)
+      Object.entries(nominatorSetups).filter(([k]) => k !== address)
     );
-    setSetups(type, updatedSetups);
+    setSetups(updatedSetups);
   };
 
   // Sets setup progress for an address. Updates localStorage followed by app state.
-  const setActiveAccountSetup = (
-    type: BondFor,
-    progress: NominatorProgress | PoolProgress
-  ) => {
-    if (!activeAccount) {
+  const setActiveAccountSetup = (progress: NominatorProgress) => {
+    if (!activeAccount.address) {
       return;
     }
 
     const updatedSetups = updateSetups(
-      assignSetups(type),
+      assignSetups(),
       progress,
-      activeAccount
+      activeAccount.address
     );
-    setSetups(type, updatedSetups);
+    setSetups(updatedSetups);
   };
 
   // Sets active setup section for an address.
-  const setActiveAccountSetupSection = (type: BondFor, section: number) => {
-    if (!activeAccount) {
+  const setActiveAccountSetupSection = (section: number) => {
+    if (!activeAccount.address) {
       return;
     }
 
-    const setups = assignSetups(type);
+    const setups = assignSetups();
     const updatedSetups = updateSetups(
       setups,
-      setups[activeAccount]?.progress ?? defaultProgress(type),
-      activeAccount,
+      setups[activeAccount.address]?.progress ?? defaultProgress(),
+      activeAccount.address,
       section
     );
-    setSetups(type, updatedSetups);
+    setSetups(updatedSetups);
   };
 
   // Utility to update the progress item of either a nominator setup or pool setup,
-  const updateSetups = <
-    T extends NominatorSetups | PoolSetups,
-    U extends NominatorProgress | PoolProgress,
-  >(
+  const updateSetups = <T extends NominatorSetups, U extends NominatorProgress>(
     all: T,
     newSetup: U,
     account: string,
@@ -163,7 +117,7 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     const current = Object.assign(all[account] || {});
     const section = maybeSection ?? current.section ?? 1;
 
-    all[account] = {
+    (all as Record<string, NominatorSetup>)[account] = {
       ...current,
       progress: newSetup,
       section,
@@ -177,7 +131,7 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     if (!address) {
       return 0;
     }
-    const setup = getSetupProgress('nominator', address) as NominatorSetup;
+    const setup = getSetupProgress(address) as NominatorSetup;
     const { progress } = setup;
     const bond = unitToPlanck(progress?.bond || '0', units);
 
@@ -195,61 +149,22 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     return percentage;
   };
 
-  // Gets the stake setup progress as a percentage for an address.
-  const getPoolSetupPercent = (address: MaybeAddress) => {
-    if (!address) {
-      return 0;
-    }
-    const setup = getSetupProgress('pool', address) as PoolSetup;
-    const { progress } = setup;
-    const bond = unitToPlanck(progress?.bond || '0', units);
-
-    const p = 25;
-    let percentage = 0;
-    if (progress.metadata !== '') {
-      percentage += p;
-    }
-    if (greaterThanZero(bond)) {
-      percentage += p;
-    }
-    if (progress.nominations.length) {
-      percentage += p;
-    }
-    if (progress.roles !== null) {
-      percentage += p - 1;
-    }
-    return percentage;
-  };
-
   // Utility to copy the current setup state based on setup type.
-  const assignSetups = (type: BondFor) =>
-    type === 'nominator' ? { ...nominatorSetups } : { ...poolSetups };
+  const assignSetups = () => ({ ...nominatorSetups });
 
   // Utility to get nominator setups, type casted as NominatorSetups.
   const localNominatorSetups = () =>
     localStorageOrDefault('nominator_setups', {}, true) as NominatorSetups;
 
-  // Utility to get pool setups, type casted as PoolSetups.
-  const localPoolSetups = () =>
-    localStorageOrDefault('pool_setups', {}, true) as PoolSetups;
-
   // Utility to update setups state depending on type.
-  const setSetups = (type: BondFor, setups: NominatorSetups | PoolSetups) => {
-    setLocalSetups(type, setups);
-
-    if (type === 'nominator') {
-      setNominatorSetups(setups as NominatorSetups);
-    } else {
-      setPoolSetups(setups as PoolSetups);
-    }
+  const setSetups = (setups: NominatorSetups) => {
+    setLocalSetups(setups);
+    setNominatorSetups(setups as NominatorSetups);
   };
 
   // Utility to either update local setups or remove if empty.
-  const setLocalSetups = (
-    type: BondFor,
-    setups: NominatorSetups | PoolSetups
-  ) => {
-    const key = type === 'nominator' ? 'nominator_setups' : 'pool_setups';
+  const setLocalSetups = (setups: NominatorSetups) => {
+    const key = 'nominator_setups';
     const setupsStr = JSON.stringify(setups);
 
     if (setupsStr === '{}') {
@@ -259,23 +174,21 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update setup state when activeAccount changes
+  // Update setup state when activeAccount.address changes
   useEffectIgnoreInitial(() => {
-    if (accounts.length) {
+    if (activeAccount.addresses?.length) {
       refreshSetups();
     }
-  }, [activeAccount, network, accounts]);
+  }, [activeAccount.address, network, activeAccount.addresses?.length]);
 
   return (
     <SetupContext.Provider
       value={{
         removeSetupProgress,
         getNominatorSetupPercent,
-        getPoolSetupPercent,
         setActiveAccountSetup,
         setActiveAccountSetupSection,
         getNominatorSetup,
-        getPoolSetup,
       }}
     >
       {children}

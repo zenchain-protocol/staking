@@ -3,21 +3,17 @@
 
 import { useTranslation } from 'react-i18next';
 import { useSetup } from 'contexts/Setup';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
 import type { FooterProps } from '../types';
 import { Wrapper } from './Wrapper';
 import { ButtonPrimary } from 'kits/Buttons/ButtonPrimary';
+import { useAccount } from 'wagmi';
 
-export const Footer = ({ complete, bondFor }: FooterProps) => {
+export const Footer = ({ complete }: FooterProps) => {
   const { t } = useTranslation('library');
-  const { activeAccount } = useActiveAccounts();
-  const { getPoolSetup, getNominatorSetup, setActiveAccountSetupSection } =
-    useSetup();
+  const activeAccount = useAccount();
+  const { getNominatorSetup, setActiveAccountSetupSection } = useSetup();
 
-  const setup =
-    bondFor === 'nominator'
-      ? getNominatorSetup(activeAccount)
-      : getPoolSetup(activeAccount);
+  const setup = getNominatorSetup(activeAccount.address);
 
   return (
     <Wrapper>
@@ -26,9 +22,7 @@ export const Footer = ({ complete, bondFor }: FooterProps) => {
           <ButtonPrimary
             lg
             text={t('continue')}
-            onClick={() =>
-              setActiveAccountSetupSection(bondFor, setup.section + 1)
-            }
+            onClick={() => setActiveAccountSetupSection(setup.section + 1)}
           />
         ) : (
           <div style={{ opacity: 0.5 }}>

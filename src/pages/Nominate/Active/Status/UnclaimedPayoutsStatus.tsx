@@ -10,8 +10,6 @@ import { minDecimalPlaces, planckToUnit } from '@w3ux/utils';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { useOverlay } from 'kits/Overlay/Provider';
 import { useNetwork } from 'contexts/Network';
-import { useActiveAccounts } from 'contexts/ActiveAccounts';
-import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts';
 
 export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
   const { t } = useTranslation();
@@ -21,8 +19,6 @@ export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
   const { isReady } = useApi();
   const { openModal } = useOverlay().modal;
   const { unclaimedPayouts } = usePayouts();
-  const { activeAccount } = useActiveAccounts();
-  const { isReadOnlyAccount } = useImportedAccounts();
 
   const totalUnclaimed = Object.values(unclaimedPayouts || {}).reduce(
     (total, paginatedValidators) =>
@@ -51,7 +47,7 @@ export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
               {
                 title: t('claim', { ns: 'modals' }),
                 icon: faCircleDown,
-                disabled: !isReady || isReadOnlyAccount(activeAccount),
+                disabled: !isReady,
                 small: true,
                 onClick: () =>
                   openModal({
